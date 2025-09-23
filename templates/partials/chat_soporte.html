@@ -1,0 +1,39 @@
+<div id="chat-toggle" class="position-fixed bottom-0 end-0 m-4">
+  <button class="btn btn-primary rounded-circle shadow" style="width:60px; height:60px;">
+    <i class="bi bi-chat-dots-fill fs-4"></i>
+  </button>
+</div>
+
+<div id="chat-window" class="card shadow position-fixed bottom-0 end-0 m-4" style="width: 350px; display: none;">
+  <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-headset"></i> Soporte en vivo</span>
+    <button type="button" class="btn-close btn-close-white" id="chat-close"></button>
+  </div>
+  <div class="card-body" style="height: 300px; overflow-y: auto; background-color: #f8f9fa;">
+    <div class="mb-2">
+      <div class="small text-muted">Soporte · 10:00</div>
+      <div class="p-2 bg-light rounded">Hola, ¿en qué puedo ayudarte hoy?</div>
+    </div>
+    <div class="mb-2 text-end">
+      <div class="small text-muted">Tú · 10:01</div>
+      <div class="p-2 bg-primary text-white rounded">Tengo problemas para acceder a mi correo.</div>
+    </div>
+  </div>
+  <div class="card-footer">
+    <div class="input-group">
+      <input type="text" class="form-control" placeholder="Escribe tu mensaje...">
+      <button class="btn btn-primary"><i class="bi bi-send-fill"></i></button>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('chat-toggle').addEventListener('click', function() {
+    document.getElementById('chat-window').style.display = 'block';
+    this.style.display = 'none';
+  });
+  document.getElementById('chat-close').addEventListener('click', function() {
+    document.getElementById('chat-window').style.display = 'none';
+    document.getElementById('chat-toggle').style.display = 'block';
+  });
+</script>

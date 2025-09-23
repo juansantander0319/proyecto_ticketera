@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Reportes y Estadísticas - Ticketera{% endblock %}
+
+{% block content %}
+<div class="container-fluid fade-in">
+  <div class="row">
+    <!-- Sidebar -->
+    {% include 'partials/sidebar_tecnico.html' %}
+
+
+    <!-- Contenido principal -->
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+      <h2 class="mt-4"><i class="bi bi-bar-chart"></i> Reportes y Estadísticas</h2>
+      <p class="text-muted">Analiza el rendimiento del equipo y el cumplimiento de SLA.</p>
+
+      <!-- Botones de exportación -->
+      <div class="mb-3 text-end">
+        <button class="btn btn-outline-secondary"><i class="bi bi-file-earmark-pdf"></i> Exportar PDF</button>
+        <button class="btn btn-outline-success"><i class="bi bi-file-earmark-excel"></i> Exportar Excel</button>
+      </div>
+
+      <!-- Gráficos -->
+      <div class="row">
+        <div class="col-md-6 mb-4">
+          <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">
+              <i class="bi bi-person-check"></i> Tickets Resueltos por Técnico
+            </div>
+            <div class="card-body">
+              <canvas id="chartPorTecnico"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 mb-4">
+          <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">
+              <i class="bi bi-clock-history"></i> Tiempo Promedio por Categoría
+            </div>
+            <div class="card-body">
+              <canvas id="chartPorCategoria"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-12 mb-4">
+          <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">
+              <i class="bi bi-clipboard-check"></i> Cumplimiento de SLA
+            </div>
+            <div class="card-body">
+              <canvas id="chartSLA"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Tickets por técnico
+  new Chart(document.getElementById('chartPorTecnico'), {
+    type: 'bar',
+    data: {
+      labels: ['Pedro López', 'María Gómez', 'Carlos Díaz'],
+      datasets: [{
+        label: 'Tickets Resueltos',
+        data: [25, 18, 12],
+        backgroundColor: ['#0d6efd', '#198754', '#ffc107']
+      }]
+    }
+  });
+
+  // Tiempo promedio por categoría
+  new Chart(document.getElementById('chartPorCategoria'), {
+    type: 'bar',
+    data: {
+      labels: ['Hardware', 'Software', 'Redes', 'Accesos', 'Impresoras'],
+      datasets: [{
+        label: 'Horas promedio',
+        data: [12, 8, 5, 10, 7],
+        backgroundColor: '#6f42c1'
+      }]
+    }
+  });
+
+  // Cumplimiento de SLA
+  new Chart(document.getElementById('chartSLA'), {
+    type: 'line',
+    data: {
+      labels: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo'],
+      datasets: [{
+        label: '% Cumplimiento',
+        data: [95, 90, 92, 88, 94],
+        borderColor: '#198754',
+        fill: false,
+        tension: 0.1
+      }]
+    }
+  });
+</script>
+{% endblock %}

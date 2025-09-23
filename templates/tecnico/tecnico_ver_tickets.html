@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Tickets - Ticketera{% endblock %}
+
+{% block content %}
+<div class="container-fluid fade-in">
+  <div class="row">
+    <!-- Sidebar -->
+    {% include 'partials/sidebar_tecnico.html' %}
+
+    <!-- Contenido principal -->
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+      <h2 class="mt-4"><i class="bi bi-ticket-perforated"></i> Gestión de Tickets</h2>
+      <p class="text-muted">Administra y actualiza el estado de los tickets.</p>
+
+      <!-- Filtros -->
+      <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+          <form class="row g-3">
+            <div class="col-md-3">
+              <label for="filtroEstado" class="form-label">Estado</label>
+              <select id="filtroEstado" class="form-select">
+                <option value="">Todos</option>
+                <option>Pendiente</option>
+                <option>En Proceso</option>
+                <option>Cerrado</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label for="filtroPrioridad" class="form-label">Prioridad</label>
+              <select id="filtroPrioridad" class="form-select">
+                <option value="">Todas</option>
+                <option>Baja</option>
+                <option>Media</option>
+                <option>Alta</option>
+                <option>Crítica</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label for="filtroTecnico" class="form-label">Técnico Asignado</label>
+              <select id="filtroTecnico" class="form-select">
+                <option value="">Todos</option>
+                <option>Pedro López</option>
+                <option>María Gómez</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label for="filtroFecha" class="form-label">Fecha</label>
+              <input type="date" id="filtroFecha" class="form-control">
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Tabla de tickets -->
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Usuario</th>
+                  <th>Asunto</th>
+                  <th>Prioridad</th>
+                  <th>Estado</th>
+                  <th>Asignado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Ejemplo de datos simulados -->
+                <tr>
+                  <td>101</td>
+                  <td>Juan Pérez</td>
+                  <td>Error en VPN</td>
+                  <td><span class="badge bg-danger">Crítica</span></td>
+                  <td><span class="badge bg-warning text-dark">En Proceso</span></td>
+                  <td>Pedro López</td>
+                  <td>
+                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalAsignar"><i class="bi bi-person-plus"></i></button>
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalEstado"><i class="bi bi-arrow-repeat"></i></button>
+                    <button class="btn btn-sm btn-outline-dark" data-bs-toggle="modal" data-bs-target="#modalComentario"><i class="bi bi-chat-left-text"></i></button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>102</td>
+                  <td>María Gómez</td>
+                  <td>Problema de acceso</td>
+                  <td><span class="badge bg-info text-dark">Media</span></td>
+                  <td><span class="badge bg-success">Cerrado</span></td>
+                  <td>Pedro López</td>
+                  <td>
+                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalAsignar"><i class="bi bi-person-plus"></i></button>
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalEstado"><i class="bi bi-arrow-repeat"></i></button>
+                    <button class="btn btn-sm btn-outline-dark" data-bs-toggle="modal" data-bs-target="#modalComentario"><i class="bi bi-chat-left-text"></i></button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Asignar Técnico -->
+      <div class="modal fade" id="modalAsignar" tabindex="-1" aria-labelledby="modalAsignarLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header bg-secondary text-white">
+              <h5 class="modal-title" id="modalAsignarLabel"><i class="bi bi-person-plus"></i> Asignar Técnico</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <select class="form-select">
+                <option>Pedro López</option>
+                <option>María Gómez</option>
+              </select>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button class="btn btn-primary">Asignar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Cambiar Estado -->
+      <div class="modal fade" id="modalEstado" tabindex="-1" aria-labelledby="modalEstadoLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+              <h5 class="modal-title" id="modalEstadoLabel"><i class="bi bi-arrow-repeat"></i> Cambiar Estado</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <select class="form-select">
+                <option>Pendiente</option>
+                <option>En Proceso</option>
+                <option>Cerrado</option>
+              </select>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button class="btn btn-primary">Guardar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Comentarios Internos -->
+      <div class="modal fade" id="modalComentario" tabindex="-1" aria-labelledby="modalComentarioLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+              <h5 class="modal-title" id="modalComentarioLabel"><i class="bi bi-chat-left-text"></i> Comentario Interno</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <textarea class="form-control" rows="4" placeholder="Escribe un comentario interno..."></textarea>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button class="btn btn-primary">Guardar</button>
+            </div>
+          </div>
+                    
+            </div> 
+          </div> 
+
+        </main> 
+      </div> 
+    </div> 
+{% endblock %}
+
+

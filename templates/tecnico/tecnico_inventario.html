@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Inventario de Activos - Ticketera{% endblock %}
+
+{% block content %}
+<div class="container-fluid fade-in">
+  <div class="row">
+    <!-- Sidebar -->
+    {% include 'partials/sidebar_tecnico.html' %}
+
+
+    <!-- Contenido principal -->
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+      <h2 class="mt-4"><i class="bi bi-pc-display"></i> Inventario de Activos</h2>
+      <p class="text-muted">Consulta y gestiona los equipos de la empresa.</p>
+
+      <!-- Botón agregar -->
+      <div class="mb-3 text-end">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalActivo">
+          <i class="bi bi-plus-circle"></i> Nuevo Activo
+        </button>
+      </div>
+
+      <!-- Tabla de activos -->
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle">
+              <thead>
+                <tr>
+                  <th>Tipo</th>
+                  <th>Marca</th>
+                  <th>Modelo</th>
+                  <th>Serie</th>
+                  <th>Asignado a</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Datos simulados -->
+                <tr>
+                  <td>Laptop</td>
+                  <td>Lenovo</td>
+                  <td>ThinkPad X13</td>
+                  <td>MCLH8YF8</td>
+                  <td>Juan Pérez</td>
+                  <td>
+                    <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#modalHistorial"><i class="bi bi-clock-history"></i></button>
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalActivo"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Monitor</td>
+                  <td>LG</td>
+                  <td>UltraWide 29"</td>
+                  <td>LG29UM68</td>
+                  <td>María Gómez</td>
+                  <td>
+                    <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#modalHistorial"><i class="bi bi-clock-history"></i></button>
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalActivo"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Nuevo/Editar Activo -->
+      <div class="modal fade" id="modalActivo" tabindex="-1" aria-labelledby="modalActivoLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+              <h5 class="modal-title" id="modalActivoLabel"><i class="bi bi-pc-display"></i> Activo</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <form class="row g-3">
+                <div class="col-md-6">
+                  <label for="tipoActivo" class="form-label">Tipo</label>
+                  <input type="text" class="form-control" id="tipoActivo" required>
+                </div>
+                <div class="col-md-6">
+                  <label for="marcaActivo" class="form-label">Marca</label>
+                  <input type="text" class="form-control" id="marcaActivo" required>
+                </div>
+                <div class="col-md-6">
+                  <label for="modeloActivo" class="form-label">Modelo</label>
+                  <input type="text" class="form-control" id="modeloActivo" required>
+                </div>
+                <div class="col-md-6">
+                  <label for="serieActivo" class="form-label">Serie</label>
+                  <input type="text" class="form-control" id="serieActivo" required>
+                </div>
+                <div class="col-12">
+                  <label for="asignadoActivo" class="form-label">Asignado a</label>
+                  <input type="text" class="form-control" id="asignadoActivo">
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button class="btn btn-primary">Guardar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Historial de Incidencias -->
+      <div class="modal fade" id="modalHistorial" tabindex="-1" aria-labelledby="modalHistorialLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+              <h5 class="modal-title" id="modalHistorialLabel"><i class="bi bi-clock-history"></i> Historial de Incidencias</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table table-sm table-hover">
+                <thead>
+                  <tr>
+                    <th>ID Ticket</th>
+                    <th>Fecha</th>
+                    <th>Descripción</th>
+                    <th>Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>201</td>
+                    <td>2025-08-15</td>
+                    <td>Reemplazo de teclado</td>
+                    <td><span class="badge bg-success">Cerrado</span></td>
+                  </tr>
+                  <tr>
+                    <td>178</td>
+                    <td>2025-07-10</td>
+                    <td>Problema de encendido</td>
+                    <td><span class="badge bg-warning text-dark">En Proceso</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+{% endblock %}

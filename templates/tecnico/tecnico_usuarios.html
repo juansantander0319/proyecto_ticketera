@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Usuarios - Ticketera{% endblock %}
+
+{% block content %}
+<div class="container-fluid fade-in">
+  <div class="row">
+    <!-- Sidebar -->
+    {% include 'partials/sidebar_tecnico.html' %}
+
+
+    <!-- Contenido principal -->
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+      <h2 class="mt-4"><i class="bi bi-people-fill"></i> Gestión de Usuarios</h2>
+      <p class="text-muted">Administra roles y estados de los usuarios de la empresa.</p>
+
+      <!-- Filtros -->
+      <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+          <form class="row g-3">
+            <div class="col-md-4">
+              <label for="filtroRol" class="form-label">Rol</label>
+              <select id="filtroRol" class="form-select">
+                <option value="">Todos</option>
+                <option>Usuario</option>
+                <option>Técnico</option>
+                <option>Administrador</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label for="filtroEstado" class="form-label">Estado</label>
+              <select id="filtroEstado" class="form-select">
+                <option value="">Todos</option>
+                <option>Activo</option>
+                <option>Inactivo</option>
+              </select>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Tabla de usuarios -->
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Correo</th>
+                  <th>Rol</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Datos simulados -->
+                <tr>
+                  <td>Juan Pérez</td>
+                  <td>juan.perez@empresa.com</td>
+                  <td><span class="badge bg-info text-dark">Usuario</span></td>
+                  <td><span class="badge bg-success">Activo</span></td>
+                  <td>
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalRol"><i class="bi bi-person-gear"></i></button>
+                    <button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalEstado"><i class="bi bi-toggle-on"></i></button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>María Gómez</td>
+                  <td>maria.gomez@empresa.com</td>
+                  <td><span class="badge bg-warning text-dark">Técnico</span></td>
+                  <td><span class="badge bg-danger">Inactivo</span></td>
+                  <td>
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalRol"><i class="bi bi-person-gear"></i></button>
+                    <button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalEstado"><i class="bi bi-toggle-off"></i></button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Cambiar Rol -->
+      <div class="modal fade" id="modalRol" tabindex="-1" aria-labelledby="modalRolLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+              <h5 class="modal-title" id="modalRolLabel"><i class="bi bi-person-gear"></i> Cambiar Rol</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <select class="form-select">
+                <option>Usuario</option>
+                <option>Técnico</option>
+                <option>Administrador</option>
+              </select>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button class="btn btn-primary">Guardar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Cambiar Estado -->
+      <div class="modal fade" id="modalEstado" tabindex="-1" aria-labelledby="modalEstadoLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+              <h5 class="modal-title" id="modalEstadoLabel"><i class="bi bi-toggle-on"></i> Cambiar Estado</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <select class="form-select">
+                <option>Activo</option>
+                <option>Inactivo</option>
+              </select>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button class="btn btn-primary">Guardar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+{% endblock %}

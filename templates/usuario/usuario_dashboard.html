@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Panel Usuario - Ticketera{% endblock %}
+
+{% block content %}
+<div class="container-fluid fade-in">
+  <div class="row">
+    <!-- Sidebar -->
+    {% include 'partials/sidebar_usuario.html' %}
+
+
+    <!-- Contenido principal -->
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+      <h2 class="mt-4"><i class="bi bi-person-circle"></i> Bienvenido, Usuario</h2>
+      <p class="text-muted">Aquí puedes ver y gestionar tus tickets de soporte.</p>
+
+      <!-- Tarjetas resumen -->
+      <div class="row my-4">
+        <div class="col-md-4">
+          <div class="card text-white bg-primary mb-3">
+            <div class="card-body">
+              <h5 class="card-title"><i class="bi bi-hourglass-split"></i> Abiertos</h5>
+              <p class="card-text fs-3">{{ tickets|selectattr('estado', 'equalto', 'Pendiente')|list|length }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card text-white bg-success mb-3">
+            <div class="card-body">
+              <h5 class="card-title"><i class="bi bi-check-circle-fill"></i> Cerrados</h5>
+              <p class="card-text fs-3">{{ tickets|selectattr('estado', 'equalto', 'Cerrado')|list|length }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Formulario para crear ticket -->
+      <div id="crear-ticket" class="card mb-4 shadow-sm">
+        <div class="card-header bg-dark text-white"><i class="bi bi-plus-circle"></i> Crear nuevo ticket</div>
+        <div class="card-body">
+          <form method="POST" action="/usuario" class="row g-3">
+            <div class="col-md-6">
+              <label for="titulo" class="form-label">Título</label>
+              <input type="text" class="form-control" id="titulo" name="titulo" placeholder="Ej: Problema con mi cuenta" required>
+            </div>
+            <div class="col-md-6">
+              <label for="categoria" class="form-label">Categoría</label>
+              <select class="form-select" id="categoria" name="categoria" required>
+                <option value="Soporte Técnico">Soporte Técnico</option>
+                <option value="Acceso">Acceso</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label for="detalle" class="form-label">Detalle</label>
+              <textarea class="form-control" id="detalle" name="detalle" rows="3" placeholder="Describe tu problema..." required></textarea>
+            </div>
+            <div class="col-12 text-end">
+              <button type="submit" class="btn btn-primary"><i class="bi bi-send-fill"></i> Enviar Ticket</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Vista rápida de tickets -->
+      <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white">
+          <i class="bi bi-list-task"></i> Últimos tickets
+          <a href="/usuario/mis-tickets" class="btn btn-outline-light btn-sm float-end">Ver todos</a>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Asunto</th>
+                  <th>Categoría</th>
+                  <th>Estado</th>
+                  <th>Fecha</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for ticket in ultimos_tickets %}
+                <tr>
+                  <td>{{ ticket.id }}</td>
+                  <td>{{ ticket.asunto }}</td>
+                  <td>{{ ticket.categoria }}</td>
+                  <td>
+                    {% if ticket.estado == "Cerrado" %}
+                      <span class="badge bg-success"><i class="bi bi-check-circle"></i> {{ ticket.estado }}</span>
+                    {% elif ticket.estado == "En Proceso" %}
+                      <span class="badge bg-warning text-dark"><i class="bi bi-arrow-repeat"></i> {{ ticket.estado }}</span>
+                    {% else %}
+                      <span class="badge bg-danger"><i class="bi bi-exclamation-circle"></i> {{ ticket.estado }}</span>
+                    {% endif %}
+                  </td>
+                  <td>{{ ticket.fecha }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                  <td colspan="5" class="text-center text-muted">No hay tickets registrados.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

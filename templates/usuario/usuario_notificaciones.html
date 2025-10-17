@@ -1,46 +1,34 @@
-{% extends "base.html" %}
+{% extends "base_usuario.html" %}
 
 {% block title %}Notificaciones - Ticketera{% endblock %}
 
 {% block content %}
 <div class="container-fluid fade-in">
-  <div class="row">
-    <!-- Sidebar -->
-    {% include 'partials/sidebar_usuario.html' %}
+  <main class="px-md-4 py-4">
+    <h2 class="mt-4"><i class="bi bi-bell-fill"></i> Notificaciones</h2>
+    <p class="text-muted">Aquí verás las alertas y actualizaciones de tus tickets.</p>
 
-
-    <!-- Contenido principal -->
-    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-      <h2 class="mt-4"><i class="bi bi-bell-fill"></i> Notificaciones</h2>
-      <p class="text-muted">Aquí verás las alertas y recordatorios de tus tickets.</p>
-
-      <div class="list-group shadow-sm">
-        <!-- Ejemplos simulados -->
-        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+    <div class="list-group shadow-sm">
+      {% if not notificaciones %}
+        <div class="list-group-item">
+          <p class="text-center text-muted mb-0">No tienes notificaciones nuevas.</p>
+        </div>
+      {% else %}
+        {% for notif in notificaciones %}
+        <a href="{{ url_for('ticket_detalle', ticket_id=notif.ticket_id) if notif.ticket_id else '#' }}" 
+           class="list-group-item list-group-item-action d-flex justify-content-between align-items-center {% if not notif.leida %}list-group-item-info{% endif %}">
           <div>
-            <i class="bi bi-exclamation-circle text-warning"></i>
-            Ticket #102 ha cambiado su estado a <strong>En Proceso</strong>.
-            <small class="text-muted d-block">Hace 10 minutos</small>
+            <i class="bi bi-info-circle-fill text-primary me-2"></i>
+            {{ notif.mensaje }}
+            <small class="text-muted d-block mt-1">{{ notif.fecha_creacion.strftime('%d-%m-%Y a las %H:%M') }}</small>
           </div>
-          <span class="badge bg-warning text-dark">Nuevo</span>
+          {% if not notif.leida %}
+            <span class="badge bg-primary rounded-pill">Nueva</span>
+          {% endif %}
         </a>
-        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-          <div>
-            <i class="bi bi-check-circle text-success"></i>
-            Ticket #98 ha sido <strong>Cerrado</strong>.
-            <small class="text-muted d-block">Hace 2 horas</small>
-          </div>
-        </a>
-        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-          <div>
-            <i class="bi bi-clock-history text-primary"></i>
-            Recordatorio: Ticket #105 pendiente de tu respuesta.
-            <small class="text-muted d-block">Hace 1 día</small>
-          </div>
-          <span class="badge bg-primary">Pendiente</span>
-        </a>
-      </div>
-    </main>
-  </div>
+        {% endfor %}
+      {% endif %}
+    </div>
+  </main>
 </div>
 {% endblock %}

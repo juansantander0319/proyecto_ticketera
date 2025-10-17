@@ -1,115 +1,154 @@
 {% extends "base.html" %}
 
-{% block title %}Gestión de Categorías y Flujos - Ticketera{% endblock %}
+{% block title %}Gestión de Categorías - Ticketera{% endblock %}
 
 {% block content %}
 <div class="container-fluid fade-in">
-  <div class="row">
-    <!-- Sidebar -->
-    {% include 'partials/sidebar_tecnico.html' %}
+    <h2 class="mt-4"><i class="bi bi-tags-fill"></i> Gestión de Categorías y SLAs</h2>
+    <p class="text-muted">Administra las categorías de tickets y define los tiempos de respuesta y solución.</p>
 
-
-    <!-- Contenido principal -->
-    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-      <h2 class="mt-4"><i class="bi bi-tags-fill"></i> Gestión de Categorías y Flujos</h2>
-      <p class="text-muted">Administra las categorías de tickets y define los SLA.</p>
-
-      <!-- Botón agregar -->
-      <div class="mb-3 text-end">
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCategoria">
-          <i class="bi bi-plus-circle"></i> Nueva Categoría
+    <div class="mb-3 text-end">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevaCategoria">
+            <i class="bi bi-plus-circle"></i> Nueva Categoría
         </button>
-      </div>
+    </div>
 
-      <!-- Tabla de categorías -->
-      <div class="card shadow-sm">
+    <div class="card shadow-sm">
         <div class="card-body">
-          <div class="table-responsive">
-            <table class="table table-striped table-hover align-middle">
-              <thead>
-                <tr>
-                  <th>Nombre</th>
-                  <th>Descripción</th>
-                  <th>SLA Respuesta</th>
-                  <th>SLA Resolución</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                <!-- Datos simulados -->
-                <tr>
-                  <td>Hardware</td>
-                  <td>Problemas con equipos físicos</td>
-                  <td>4h</td>
-                  <td>24h</td>
-                  <td>
-                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalCategoria"><i class="bi bi-pencil"></i></button>
-                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>Software</td>
-                  <td>Errores o instalación de programas</td>
-                  <td>2h</td>
-                  <td>12h</td>
-                  <td>
-                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalCategoria"><i class="bi bi-pencil"></i></button>
-                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>Redes</td>
-                  <td>Conectividad y acceso a internet</td>
-                  <td>1h</td>
-                  <td>8h</td>
-                  <td>
-                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalCategoria"><i class="bi bi-pencil"></i></button>
-                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Descripción</th>
+                            <th>SLA Respuesta</th>
+                            <th>SLA Resolución</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cat in categorias %}
+                        <tr>
+                            <td>{{ cat.nombre }}</td>
+                            <td>{{ cat.descripcion }}</td>
+                            <td>{{ cat.sla_respuesta }}h</td>
+                            <td>{{ cat.sla_resolucion }}h</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary edit-btn"
+                                        data-bs-toggle="modal" data-bs-target="#modalEditarCategoria"
+                                        data-id="{{ cat.id }}"
+                                        data-nombre="{{ cat.nombre }}"
+                                        data-descripcion="{{ cat.descripcion }}"
+                                        data-sla-respuesta="{{ cat.sla_respuesta }}"
+                                        data-sla-resolucion="{{ cat.sla_resolucion }}">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger delete-btn" 
+                                        data-bs-toggle="modal" data-bs-target="#modalEliminarCategoria"
+                                        data-id="{{ cat.id }}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
-      </div>
-
-      <!-- Modal Nueva/Editar Categoría -->
-      <div class="modal fade" id="modalCategoria" tabindex="-1" aria-labelledby="modalCategoriaLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-              <h5 class="modal-title" id="modalCategoriaLabel"><i class="bi bi-tags-fill"></i> Categoría</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <form class="row g-3">
-                <div class="col-12">
-                  <label for="nombreCategoria" class="form-label">Nombre</label>
-                  <input type="text" class="form-control" id="nombreCategoria" required>
-                </div>
-                <div class="col-12">
-                  <label for="descripcionCategoria" class="form-label">Descripción</label>
-                  <textarea class="form-control" id="descripcionCategoria" rows="2"></textarea>
-                </div>
-                <div class="col-md-6">
-                  <label for="slaRespuesta" class="form-label">SLA Respuesta (horas)</label>
-                  <input type="number" class="form-control" id="slaRespuesta" min="1">
-                </div>
-                <div class="col-md-6">
-                  <label for="slaResolucion" class="form-label">SLA Resolución (horas)</label>
-                  <input type="number" class="form-control" id="slaResolucion" min="1">
-                </div>
-              </form>
-            </div>
-            <div class="modal-footer">
-              <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-              <button class="btn btn-primary">Guardar</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </main>
-  </div>
+    </div>
 </div>
+
+<div class="modal fade" id="modalNuevaCategoria" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Nueva Categoría</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('tecnico_categorias') }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3"><label for="nombre" class="form-label">Nombre</label><input type="text" class="form-control" name="nombre" required></div>
+                    <div class="mb-3"><label for="descripcion" class="form-label">Descripción</label><textarea class="form-control" name="descripcion" rows="2"></textarea></div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3"><label for="sla_respuesta" class="form-label">SLA Respuesta (horas)</label><input type="number" class="form-control" name="sla_respuesta" min="1" required></div>
+                        <div class="col-md-6 mb-3"><label for="sla_resolucion" class="form-label">SLA Resolución (horas)</label><input type="number" class="form-control" name="sla_resolucion" min="1" required></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEditarCategoria" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Editar Categoría</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('editar_categoria') }}" method="POST">
+                <div class="modal-body">
+                    <input type="hidden" name="id_categoria_edit" id="id_categoria_edit">
+                    <div class="mb-3"><label for="nombre_edit" class="form-label">Nombre</label><input type="text" class="form-control" name="nombre_edit" id="nombre_edit" required></div>
+                    <div class="mb-3"><label for="descripcion_edit" class="form-label">Descripción</label><textarea class="form-control" name="descripcion_edit" id="descripcion_edit" rows="2"></textarea></div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3"><label for="sla_respuesta_edit" class="form-label">SLA Respuesta (horas)</label><input type="number" class="form-control" name="sla_respuesta_edit" id="sla_respuesta_edit" min="1" required></div>
+                        <div class="col-md-6 mb-3"><label for="sla_resolucion_edit" class="form-label">SLA Resolución (horas)</label><input type="number" class="form-control" name="sla_resolucion_edit" id="sla_resolucion_edit" min="1" required></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Actualizar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEliminarCategoria" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('eliminar_categoria') }}" method="POST">
+                <div class="modal-body">
+                    <p>¿Estás seguro de que quieres eliminar esta categoría? Esta acción no se puede deshacer.</p>
+                    <input type="hidden" name="id_categoria_delete" id="id_categoria_delete">
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Script para rellenar el modal de edición
+    var editModal = document.getElementById('modalEditarCategoria');
+    editModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+        document.getElementById('id_categoria_edit').value = button.getAttribute('data-id');
+        document.getElementById('nombre_edit').value = button.getAttribute('data-nombre');
+        document.getElementById('descripcion_edit').value = button.getAttribute('data-descripcion');
+        document.getElementById('sla_respuesta_edit').value = button.getAttribute('data-sla-respuesta');
+        document.getElementById('sla_resolucion_edit').value = button.getAttribute('data-sla-resolucion');
+    });
+
+    // Script para rellenar el modal de eliminación
+    var deleteModal = document.getElementById('modalEliminarCategoria');
+    deleteModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+        document.getElementById('id_categoria_delete').value = button.getAttribute('data-id');
+    });
+});
+</script>
 {% endblock %}

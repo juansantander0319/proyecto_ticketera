@@ -1,0 +1,15 @@
+# Entorno virtual de Python
+venv/
+__pycache__/
+
+# Archivo de variables de entorno
+.env
+
+# Archivo de índice de técnico
+last_technician_index.txt
+
+# Archivos de log
+*.log
+
+# Carpeta de subidas
+uploads/

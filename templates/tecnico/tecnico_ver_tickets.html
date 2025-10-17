@@ -1,175 +1,64 @@
 {% extends "base.html" %}
-
-{% block title %}Gestión de Tickets - Ticketera{% endblock %}
-
+{% block title %}Mis Tickets Asignados - Ticketera{% endblock %}
 {% block content %}
 <div class="container-fluid fade-in">
-  <div class="row">
-    <!-- Sidebar -->
-    {% include 'partials/sidebar_tecnico.html' %}
-
-    <!-- Contenido principal -->
-    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-      <h2 class="mt-4"><i class="bi bi-ticket-perforated"></i> Gestión de Tickets</h2>
-      <p class="text-muted">Administra y actualiza el estado de los tickets.</p>
-
-      <!-- Filtros -->
-      <div class="card mb-4 shadow-sm">
+  <main class="px-md-4 py-4">
+    <h2 class="mb-1"><i class="bi bi-ticket-perforated"></i> Mis Tickets Asignados</h2>
+    <p class="text-muted mb-0">Tickets que están bajo tu responsabilidad.</p>
+    
+    <div class="card shadow-sm my-4">
         <div class="card-body">
-          <form class="row g-3">
-            <div class="col-md-3">
-              <label for="filtroEstado" class="form-label">Estado</label>
-              <select id="filtroEstado" class="form-select">
-                <option value="">Todos</option>
-                <option>Pendiente</option>
-                <option>En Proceso</option>
-                <option>Cerrado</option>
-              </select>
-            </div>
-            <div class="col-md-3">
-              <label for="filtroPrioridad" class="form-label">Prioridad</label>
-              <select id="filtroPrioridad" class="form-select">
-                <option value="">Todas</option>
-                <option>Baja</option>
-                <option>Media</option>
-                <option>Alta</option>
-                <option>Crítica</option>
-              </select>
-            </div>
-            <div class="col-md-3">
-              <label for="filtroTecnico" class="form-label">Técnico Asignado</label>
-              <select id="filtroTecnico" class="form-select">
-                <option value="">Todos</option>
-                <option>Pedro López</option>
-                <option>María Gómez</option>
-              </select>
-            </div>
-            <div class="col-md-3">
-              <label for="filtroFecha" class="form-label">Fecha</label>
-              <input type="date" id="filtroFecha" class="form-control">
-            </div>
-          </form>
+            <form method="GET" action="{{ url_for('tecnico_mis_asignados') }}">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-5"><label class="form-label">Buscar por Asunto</label><input type="search" name="search" class="form-control" value="{{ filters.search or '' }}"></div>
+                    <div class="col-md-4"><label class="form-label">Estado</label><select name="estado" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="Abierto" {% if filters.estado == 'Abierto' %}selected{% endif %}>Abierto</option>
+                        <option value="En Proceso" {% if filters.estado == 'En Proceso' %}selected{% endif %}>En Proceso</option>
+                        <option value="Cerrado" {% if filters.estado == 'Cerrado' %}selected{% endif %}>Cerrado</option>
+                    </select></div>
+                    <div class="col-md-3 d-flex">
+                        <button type="submit" class="btn btn-primary me-2"><i class="bi bi-filter"></i> Filtrar</button>
+                        <a href="{{ url_for('tecnico_mis_asignados') }}" class="btn btn-secondary"><i class="bi bi-x-lg"></i> Limpiar</a>
+                    </div>
+                </div>
+            </form>
         </div>
-      </div>
+    </div>
 
-      <!-- Tabla de tickets -->
-      <div class="card shadow-sm">
-        <div class="card-body">
-          <div class="table-responsive">
-            <table class="table table-striped table-hover align-middle">
-              <thead>
+    <div class="card shadow-sm">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light"><tr><th class="ps-3">ID</th><th>Asunto</th><th>Creado por</th><th>Estado</th><th class="text-end pe-3">Acciones</th></tr></thead>
+            <tbody>
+              {% if not pagination.items %}
+              <tr><td colspan="5" class="text-center text-muted p-4">No tienes tickets asignados que coincidan con los filtros.</td></tr>
+              {% else %}
+                {% for ticket in pagination.items %}
                 <tr>
-                  <th>ID</th>
-                  <th>Usuario</th>
-                  <th>Asunto</th>
-                  <th>Prioridad</th>
-                  <th>Estado</th>
-                  <th>Asignado</th>
-                  <th>Acciones</th>
+                  <td class="ps-3 fw-bold">#{{ ticket.id }}</td>
+                  <td><div class="fw-semibold">{{ ticket.asunto }}</div><small class="text-muted">{{ ticket.categoria.nombre }}</small></td>
+                  <td><div class="fw-semibold">{{ ticket.creador.nombre }}</div></td>
+                  <td><span class="badge bg-secondary">{{ ticket.estado }}</span></td>
+                  <td class="text-end pe-3"><a href="{{ url_for('ticket_detalle', ticket_id=ticket.id) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> Gestionar</a></td>
                 </tr>
-              </thead>
-              <tbody>
-                <!-- Ejemplo de datos simulados -->
-                <tr>
-                  <td>101</td>
-                  <td>Juan Pérez</td>
-                  <td>Error en VPN</td>
-                  <td><span class="badge bg-danger">Crítica</span></td>
-                  <td><span class="badge bg-warning text-dark">En Proceso</span></td>
-                  <td>Pedro López</td>
-                  <td>
-                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalAsignar"><i class="bi bi-person-plus"></i></button>
-                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalEstado"><i class="bi bi-arrow-repeat"></i></button>
-                    <button class="btn btn-sm btn-outline-dark" data-bs-toggle="modal" data-bs-target="#modalComentario"><i class="bi bi-chat-left-text"></i></button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>102</td>
-                  <td>María Gómez</td>
-                  <td>Problema de acceso</td>
-                  <td><span class="badge bg-info text-dark">Media</span></td>
-                  <td><span class="badge bg-success">Cerrado</span></td>
-                  <td>Pedro López</td>
-                  <td>
-                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalAsignar"><i class="bi bi-person-plus"></i></button>
-                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalEstado"><i class="bi bi-arrow-repeat"></i></button>
-                    <button class="btn btn-sm btn-outline-dark" data-bs-toggle="modal" data-bs-target="#modalComentario"><i class="bi bi-chat-left-text"></i></button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+                {% endfor %}
+              {% endif %}
+            </tbody>
+          </table>
         </div>
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}"><a class="page-link" href="{{ url_for('tecnico_mis_asignados', page=pagination.prev_num, **filters) }}">Anterior</a></li>
+                {% for page_num in pagination.iter_pages() %}
+                    {% if page_num %}<li class="page-item {% if page_num == pagination.page %}active{% endif %}"><a class="page-link" href="{{ url_for('tecnico_mis_asignados', page=page_num, **filters) }}">{{ page_num }}</a></li>{% endif %}
+                {% endfor %}
+                <li class="page-item {% if not pagination.has_next %}disabled{% endif %}"><a class="page-link" href="{{ url_for('tecnico_mis_asignados', page=pagination.next_num, **filters) }}">Siguiente</a></li>
+            </ul>
+        </nav>
       </div>
-
-      <!-- Modal Asignar Técnico -->
-      <div class="modal fade" id="modalAsignar" tabindex="-1" aria-labelledby="modalAsignarLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header bg-secondary text-white">
-              <h5 class="modal-title" id="modalAsignarLabel"><i class="bi bi-person-plus"></i> Asignar Técnico</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <select class="form-select">
-                <option>Pedro López</option>
-                <option>María Gómez</option>
-              </select>
-            </div>
-            <div class="modal-footer">
-              <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-              <button class="btn btn-primary">Asignar</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Modal Cambiar Estado -->
-      <div class="modal fade" id="modalEstado" tabindex="-1" aria-labelledby="modalEstadoLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-              <h5 class="modal-title" id="modalEstadoLabel"><i class="bi bi-arrow-repeat"></i> Cambiar Estado</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <select class="form-select">
-                <option>Pendiente</option>
-                <option>En Proceso</option>
-                <option>Cerrado</option>
-              </select>
-            </div>
-            <div class="modal-footer">
-              <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-              <button class="btn btn-primary">Guardar</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Modal Comentarios Internos -->
-      <div class="modal fade" id="modalComentario" tabindex="-1" aria-labelledby="modalComentarioLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header bg-dark text-white">
-              <h5 class="modal-title" id="modalComentarioLabel"><i class="bi bi-chat-left-text"></i> Comentario Interno</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <textarea class="form-control" rows="4" placeholder="Escribe un comentario interno..."></textarea>
-            </div>
-            <div class="modal-footer">
-              <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-              <button class="btn btn-primary">Guardar</button>
-            </div>
-          </div>
-                    
-            </div> 
-          </div> 
-
-        </main> 
-      </div> 
-    </div> 
+    </div>
+  </main>
+</div>
 {% endblock %}
-
-

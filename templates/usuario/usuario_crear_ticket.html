@@ -1,73 +1,39 @@
-{% extends "base.html" %}
+{% extends "base_usuario.html" %}
 
 {% block title %}Crear Ticket - Ticketera{% endblock %}
 
 {% block content %}
 <div class="container-fluid fade-in">
-  <div class="row">
-    <!-- Sidebar -->
-    {% include 'partials/sidebar_usuario.html' %}
-    <!-- Contenido principal -->
-    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-      <h2 class="mt-4"><i class="bi bi-plus-circle"></i> Crear nuevo ticket</h2>
-      <p class="text-muted">Completa el formulario para registrar un nuevo ticket de soporte.</p>
-
-      <div class="card shadow-sm">
-        <div class="card-body">
-          <form class="row g-3">
-            <!-- Categoría -->
-            <div class="col-md-6">
-              <label for="categoria" class="form-label">Categoría</label>
-              <select class="form-select" id="categoria" name="categoria" required>
-                <option value="">Selecciona una categoría</option>
-                <option>Hardware</option>
-                <option>Software</option>
-                <option>Redes</option>
-                <option>Accesos</option>
-                <option>Impresoras</option>
-              </select>
-            </div>
-
-            <!-- Prioridad -->
-            <div class="col-md-6">
-              <label for="prioridad" class="form-label">Prioridad</label>
-              <select class="form-select" id="prioridad" name="prioridad" required>
-                <option value="">Selecciona prioridad</option>
-                <option>Baja</option>
-                <option>Media</option>
-                <option>Alta</option>
-                <option>Crítica</option>
-              </select>
-            </div>
-
-            <!-- Asunto -->
-            <div class="col-12">
-              <label for="asunto" class="form-label">Asunto</label>
-              <input type="text" class="form-control" id="asunto" name="asunto" placeholder="Ej: No puedo acceder al correo" required>
-            </div>
-
-            <!-- Descripción -->
-            <div class="col-12">
-              <label for="descripcion" class="form-label">Descripción</label>
-              <textarea class="form-control" id="descripcion" name="descripcion" rows="4" placeholder="Describe el problema con el mayor detalle posible..." required></textarea>
-            </div>
-
-            <!-- Adjuntos -->
-            <div class="col-12">
-              <label for="adjunto" class="form-label">Adjuntar archivo</label>
-              <input class="form-control" type="file" id="adjunto" name="adjunto" multiple>
-              <small class="text-muted">Puedes adjuntar capturas, logs o documentos relacionados.</small>
-            </div>
-
-            <!-- Botones -->
-            <div class="col-12 text-end">
-              <button type="reset" class="btn btn-outline-secondary"><i class="bi bi-x-circle"></i> Limpiar</button>
-              <button type="submit" class="btn btn-primary"><i class="bi bi-send-fill"></i> Enviar Ticket</button>
-            </div>
-          </form>
-        </div>
+  <main class="px-md-4 py-4">
+    <h2 class="mt-4"><i class="bi bi-plus-circle"></i> Crear nuevo ticket</h2>
+    <p class="text-muted">Completa el formulario para registrar un nuevo ticket de soporte.</p>
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <form class="row g-3" method="POST" enctype="multipart/form-data">
+          <div class="col-md-6">
+            <label for="categoria_id" class="form-label">Categoría</label>
+            <select class="form-select" id="categoria_id" name="categoria_id" required>
+              <option value="">Selecciona una categoría</option>
+              {% for cat in categorias %}<option value="{{ cat.id }}">{{ cat.nombre }} (SLA: {{ cat.sla_resolucion }}h)</option>{% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label for="prioridad" class="form-label">Prioridad</label>
+            <select class="form-select" id="prioridad" name="prioridad" required>
+              <option value="">Selecciona prioridad</option>
+              <option>Baja</option><option>Media</option><option>Alta</option><option>Crítica</option>
+            </select>
+          </div>
+          <div class="col-12"><label for="asunto" class="form-label">Asunto</label><input type="text" class="form-control" id="asunto" name="asunto" required></div>
+          <div class="col-12"><label for="descripcion" class="form-label">Descripción</label><textarea class="form-control" id="descripcion" name="descripcion" rows="4" required></textarea></div>
+          <div class="col-12"><label for="adjunto" class="form-label">Adjuntar archivo (Opcional)</label><input class="form-control" type="file" id="adjunto" name="adjunto"></div>
+          <div class="col-12 text-end">
+            <button type="reset" class="btn btn-outline-secondary"><i class="bi bi-x-circle"></i> Limpiar</button>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-send-fill"></i> Enviar Ticket</button>
+          </div>
+        </form>
       </div>
-    </main>
-  </div>
+    </div>
+  </main>
 </div>
 {% endblock %}

@@ -1,57 +1,41 @@
 {% extends "base.html" %}
 
-{% block title %}Calendario de Incidencias - Ticketera{% endblock %}
+{% block title %}Calendario de Tickets - Ticketera{% endblock %}
 
 {% block content %}
 <div class="container-fluid fade-in">
-  <div class="row">
-    <!-- Sidebar -->
-    {% include 'partials/sidebar_tecnico.html' %}
+  <main class="px-md-4 py-4">
+    <h2 class="mt-4"><i class="bi bi-calendar-week"></i> Calendario de Tickets</h2>
+    <p class="text-muted">Visualiza los tickets por su fecha de creación.</p>
 
-
-    <!-- Contenido principal -->
-    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-      <h2 class="mt-4"><i class="bi bi-calendar-week"></i> Calendario de Incidencias</h2>
-      <p class="text-muted">Visualiza tickets programados y mantenimientos.</p>
-
-      <div id="calendar" class="bg-white p-3 shadow-sm rounded"></div>
-    </main>
-  </div>
+    <div id="calendar" class="bg-white p-3 shadow-sm rounded"></div>
+  </main>
 </div>
 
-<!-- FullCalendar -->
-<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js'></script>
 <script>
   document.addEventListener('DOMContentLoaded', function() {
+    // Recibimos los datos desde el backend
+    const eventos = {{ eventos|tojson }};
+
     var calendarEl = document.getElementById('calendar');
     var calendar = new FullCalendar.Calendar(calendarEl, {
       initialView: 'dayGridMonth',
-      locale: 'es',
+      locale: 'es', // Usar el archivo de idioma español
       headerToolbar: {
         left: 'prev,next today',
         center: 'title',
         right: 'dayGridMonth,timeGridWeek,timeGridDay'
       },
-      events: [
-        {
-          title: 'Mantenimiento Servidor',
-          start: '2025-09-10',
-          color: '#0d6efd'
-        },
-        {
-          title: 'Instalación de impresoras',
-          start: '2025-09-12',
-          color: '#198754'
-        },
-        {
-          title: 'Ticket #105 - Error VPN',
-          start: '2025-09-14',
-          end: '2025-09-15',
-          color: '#dc3545'
+      events: eventos, // Usar los eventos dinámicos
+      eventClick: function(info) {
+        // Prevenir el comportamiento por defecto
+        info.jsEvent.preventDefault();
+        // Abrir la URL del evento (página de detalle) si existe
+        if (info.event.url) {
+          window.location.href = info.event.url;
         }
-      ]
+      }
     });
     calendar.render();
   });

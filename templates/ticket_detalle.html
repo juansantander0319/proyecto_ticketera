@@ -1,0 +1,96 @@
+{% extends "base_usuario.html" if session.rol == 'Usuario' else "base.html" %}
+
+{% block title %}Detalle Ticket #{{ ticket.id }} - Ticketera{% endblock %}
+
+{% block content %}
+<div class="container-fluid fade-in">
+    <h2 class="mt-4"><i class="bi bi-ticket-detailed"></i> Detalle del Ticket #{{ ticket.id }}</h2>
+    <div class="row mt-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header"><h5 class="mb-0">{{ ticket.asunto }}</h5></div>
+                <div class="card-body">
+                    <p><strong>Descripción Inicial:</strong></p>
+                    <p style="white-space: pre-wrap;">{{ ticket.descripcion }}</p>
+                    {% if ticket.adjuntos %}<hr><p><strong>Archivos Adjuntos:</strong></p>
+                    <ul class="list-group">{% for adjunto in ticket.adjuntos %}<li class="list-group-item"><a href="{{ url_for('download_file', filename=adjunto.nombre_archivo) }}"><i class="bi bi-paperclip"></i> {{ adjunto.nombre_archivo.split('_', 1)[1] }}</a></li>{% endfor %}</ul>
+                    {% endif %}
+                </div>
+            </div>
+            <h4 class="mb-3">Historial de la Conversación</h4>
+            {% for comentario in comentarios %}
+            <div class="card mb-3 {% if comentario.autor.rol != 'Usuario' %}bg-light{% endif %}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between"><p class="card-title mb-1"><strong>{{ comentario.autor.nombre }}</strong> ({{ comentario.autor.rol }})</p><small class="text-muted">{{ comentario.fecha_creacion.strftime('%d-%m-%Y %H:%M') }}</small></div>
+                    <p class="card-text">{{ comentario.contenido }}</p>
+                </div>
+            </div>
+            {% endfor %}
+            {% if ticket.estado != 'Cerrado' %}
+            <div class="card shadow-sm mt-4"><div class="card-body"><h5 class="card-title">Añadir una respuesta</h5><form action="{{ url_for('ticket_detalle', ticket_id=ticket.id) }}" method="POST"><div class="mb-3"><textarea name="contenido" class="form-control" rows="4" required></textarea></div><div class="text-end"><button type="submit" class="btn btn-primary">Enviar Respuesta</button></div></form></div></div>
+            {% else %}
+            <div class="alert alert-info mt-4"><i class="bi bi-info-circle-fill"></i> Este ticket está cerrado.</div>
+            {% endif %}
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Información</h5>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item"><strong>Estado:</strong><span class="badge bg-{% if ticket.estado == 'Cerrado' %}success{% elif ticket.estado == 'En Proceso' %}warning text-dark{% else %}danger{% endif %}">{{ ticket.estado }}</span></li>
+                        <li class="list-group-item"><strong>Vencimiento SLA:</strong><span class="{% if ticket.fecha_vencimiento_sla < now %}text-danger fw-bold{% endif %}">{{ ticket.fecha_vencimiento_sla.strftime('%d-%m-%Y %H:%M') if ticket.fecha_vencimiento_sla }}</span></li>
+                        <li class="list-group-item"><strong>Asignado a:</strong> {% if ticket.tecnico_asignado %}{{ ticket.tecnico_asignado.nombre }}{% else %}<span class="text-muted">Aún no asignado</span>{% endif %}</li>
+                    </ul>
+                    
+                    {% if ticket.estado != 'Cerrado' and session.rol in ['Técnico Nivel 1', 'Técnico Nivel 2'] %}
+                    <div class="mt-3"><hr><h6>Acciones de Técnico</h6>
+                        <form method="POST" action="{{ url_for('cambiar_estado_ticket', ticket_id=ticket.id) }}">
+                             <div class="input-group mb-3"><select name="nuevo_estado" class="form-select"><option value="Abierto">Abierto</option><option value="En Proceso">En Proceso</option><option value="Cerrado">Cerrado</option></select><button type="submit" class="btn btn-primary">Cambiar Estado</button></div>
+                        </form>
+                        
+                        {% if session.rol == 'Técnico Nivel 1' %}
+                        <button class="btn btn-warning w-100" data-bs-toggle="modal" data-bs-target="#escalarModal">Escalar a Técnico Superior</button>
+                        {% elif session.rol == 'Técnico Nivel 2' %}
+                        <button class="btn btn-secondary w-100" data-bs-toggle="modal" data-bs-target="#reasignarModal">Reasignar Ticket</button>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="escalarModal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <form action="{{ url_for('reasignar_ticket', ticket_id=ticket.id) }}" method="POST">
+            <div class="modal-header"><h5 class="modal-title">Escalar Ticket a Técnico Nivel 2</h5></div>
+            <div class="modal-body">
+                <label for="tecnico_id" class="form-label">Seleccionar técnico superior:</label>
+                <select name="tecnico_id" class="form-select" required>
+                    <option value="">-- Elige un técnico --</option>
+                    {% for tecnico in tecnicos %}{% if tecnico.rol == 'Técnico Nivel 2' %}<option value="{{ tecnico.id }}">{{ tecnico.nombre }}</option>{% endif %}{% endfor %}
+                </select>
+            </div>
+            <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-warning">Escalar</button></div>
+        </form>
+    </div></div>
+</div>
+
+<div class="modal fade" id="reasignarModal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <form action="{{ url_for('reasignar_ticket', ticket_id=ticket.id) }}" method="POST">
+            <div class="modal-header"><h5 class="modal-title">Reasignar Ticket</h5></div>
+            <div class="modal-body">
+                <label for="tecnico_id" class="form-label">Seleccionar nuevo técnico:</label>
+                <select name="tecnico_id" class="form-select" required>
+                    <option value="">-- Elige un técnico --</option>
+                    {% for tecnico in tecnicos %}<option value="{{ tecnico.id }}" {% if tecnico.id == ticket.tecnico_id %}selected{% endif %}>{{ tecnico.nombre }} ({{ tecnico.rol }})</option>{% endfor %}
+                </select>
+            </div>
+            <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Reasignar</button></div>
+        </form>
+    </div></div>
+</div>
+{% endblock %}

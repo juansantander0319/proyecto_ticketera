@@ -1,133 +1,62 @@
-{% extends "base.html" %}
+{% extends "base_usuario.html" %}
 
 {% block title %}Mis Tickets - Ticketera{% endblock %}
 
 {% block content %}
 <div class="container-fluid fade-in">
-  <div class="row">
-    <!-- Sidebar -->
-    {% include 'partials/sidebar_usuario.html' %}
+    <h2 class="mt-4"><i class="bi bi-ticket-perforated"></i> Mis Tickets</h2>
+    <p class="text-muted">Consulta el historial de tus tickets de soporte.</p>
 
-
-    <!-- Contenido principal -->
-    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-      <h2 class="mt-4"><i class="bi bi-ticket-perforated"></i> Mis Tickets</h2>
-      <p class="text-muted">Consulta y filtra tus tickets de soporte.</p>
-
-      <!-- Filtros -->
-      <div class="card mb-4 shadow-sm">
-        <div class="card-body">
-          <form class="row g-3">
-            <div class="col-md-4">
-              <label for="filtroEstado" class="form-label">Estado</label>
-              <select id="filtroEstado" class="form-select">
-                <option value="">Todos</option>
-                <option>Pendiente</option>
-                <option>En Proceso</option>
-                <option>Cerrado</option>
-              </select>
-            </div>
-            <div class="col-md-4">
-              <label for="filtroPrioridad" class="form-label">Prioridad</label>
-              <select id="filtroPrioridad" class="form-select">
-                <option value="">Todas</option>
-                <option>Baja</option>
-                <option>Media</option>
-                <option>Alta</option>
-                <option>Crítica</option>
-              </select>
-            </div>
-            <div class="col-md-4">
-              <label for="filtroFecha" class="form-label">Fecha</label>
-              <input type="date" id="filtroFecha" class="form-control">
-            </div>
-          </form>
+    <div class="card shadow-sm mt-4">
+    <div class="card-body">
+        <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Asunto</th>
+                <th>Categoría</th>
+                <th>Prioridad</th>
+                <th>Estado</th>
+                <th>Fecha Creación</th>
+                <th>Acciones</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% if not tickets %}
+                <tr>
+                <td colspan="7" class="text-center text-muted">Aún no has creado ningún ticket.</td>
+                </tr>
+            {% else %}
+                {% for ticket in tickets %}
+                <tr>
+                <td>#{{ ticket.id }}</td>
+                <td>{{ ticket.asunto }}</td>
+                <td>{{ ticket.categoria.nombre }}</td>
+                <td>
+                    {% if ticket.prioridad == 'Crítica' %}<span class="badge bg-danger">{{ ticket.prioridad }}</span>
+                    {% elif ticket.prioridad == 'Alta' %}<span class="badge bg-warning text-dark">{{ ticket.prioridad }}</span>
+                    {% elif ticket.prioridad == 'Media' %}<span class="badge bg-info text-dark">{{ ticket.prioridad }}</span>
+                    {% else %}<span class="badge bg-secondary">{{ ticket.prioridad }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if ticket.estado == 'Cerrado' %}<span class="badge bg-success">{{ ticket.estado }}</span>
+                    {% elif ticket.estado == 'En Proceso' %}<span class="badge bg-warning text-dark">{{ ticket.estado }}</span>
+                    {% else %}<span class="badge bg-danger">{{ ticket.estado }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ ticket.fecha_creacion.strftime('%d-%m-%Y %H:%M') }}</td>
+                <td>
+                    <a href="{{ url_for('ticket_detalle', ticket_id=ticket.id) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> Ver</a>
+                </td>
+                </tr>
+                {% endfor %}
+            {% endif %}
+            </tbody>
+        </table>
         </div>
-      </div>
-
-      <!-- Tabla de tickets -->
-      <div class="card shadow-sm">
-        <div class="card-body">
-          <div class="table-responsive">
-            <table class="table table-striped table-hover align-middle">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Asunto</th>
-                  <th>Categoría</th>
-                  <th>Prioridad</th>
-                  <th>Estado</th>
-                  <th>Fecha</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                <!-- Ejemplo de datos simulados -->
-                <tr>
-                  <td>1</td>
-                  <td>Error en login</td>
-                  <td>Accesos</td>
-                  <td><span class="badge bg-warning text-dark">Alta</span></td>
-                  <td><span class="badge bg-danger">Pendiente</span></td>
-                  <td>2025-09-05</td>
-                  <td>
-                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalDetalle"><i class="bi bi-eye"></i> Ver</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>2</td>
-                  <td>Solicitud de acceso</td>
-                  <td>Accesos</td>
-                  <td><span class="badge bg-info text-dark">Media</span></td>
-                  <td><span class="badge bg-warning text-dark">En Proceso</span></td>
-                  <td>2025-09-03</td>
-                  <td>
-                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalDetalle"><i class="bi bi-eye"></i> Ver</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>3</td>
-                  <td>Problema con impresora</td>
-                  <td>Impresoras</td>
-                  <td><span class="badge bg-danger">Crítica</span></td>
-                  <td><span class="badge bg-success">Cerrado</span></td>
-                  <td>2025-09-01</td>
-                  <td>
-                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalDetalle"><i class="bi bi-eye"></i> Ver</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- Modal Detalle Ticket -->
-      <div class="modal fade" id="modalDetalle" tabindex="-1" aria-labelledby="modalDetalleLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-              <h5 class="modal-title" id="modalDetalleLabel"><i class="bi bi-ticket-detailed"></i> Detalle del Ticket</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body">
-              <p><strong>Asunto:</strong> Error en login</p>
-              <p><strong>Categoría:</strong> Accesos</p>
-              <p><strong>Prioridad:</strong> Alta</p>
-              <p><strong>Estado:</strong> Pendiente</p>
-              <p><strong>Descripción:</strong> No puedo acceder a mi correo corporativo desde ayer.</p>
-              <hr>
-              <label for="comentario" class="form-label">Agregar comentario</label>
-              <textarea id="comentario" class="form-control" rows="3" placeholder="Escribe tu comentario..."></textarea>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-              <button type="button" class="btn btn-primary">Guardar comentario</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </main>
-  </div>
+    </div>
+    </div>
 </div>
 {% endblock %}

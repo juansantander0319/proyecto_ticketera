@@ -1,132 +1,160 @@
 {% extends "base.html" %}
-
 {% block title %}Gestión de Usuarios - Ticketera{% endblock %}
-
 {% block content %}
 <div class="container-fluid fade-in">
-  <div class="row">
-    <!-- Sidebar -->
-    {% include 'partials/sidebar_tecnico.html' %}
-
-
-    <!-- Contenido principal -->
-    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-      <h2 class="mt-4"><i class="bi bi-people-fill"></i> Gestión de Usuarios</h2>
-      <p class="text-muted">Administra roles y estados de los usuarios de la empresa.</p>
-
-      <!-- Filtros -->
-      <div class="card mb-4 shadow-sm">
+  <main class="px-md-4 py-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="mt-4"><i class="bi bi-people-fill"></i> Gestión de Usuarios</h2>
+            <p class="text-muted">Crea, edita y elimina usuarios del sistema.</p>
+        </div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCrearUsuario"><i class="bi bi-person-plus-fill"></i> Crear Usuario</button>
+    </div>
+    
+    <div class="card shadow-sm my-4">
         <div class="card-body">
-          <form class="row g-3">
-            <div class="col-md-4">
-              <label for="filtroRol" class="form-label">Rol</label>
-              <select id="filtroRol" class="form-select">
-                <option value="">Todos</option>
-                <option>Usuario</option>
-                <option>Técnico</option>
-                <option>Administrador</option>
-              </select>
-            </div>
-            <div class="col-md-4">
-              <label for="filtroEstado" class="form-label">Estado</label>
-              <select id="filtroEstado" class="form-select">
-                <option value="">Todos</option>
-                <option>Activo</option>
-                <option>Inactivo</option>
-              </select>
-            </div>
-          </form>
+            <form method="GET" action="{{ url_for('tecnico_usuarios') }}">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-5"><label class="form-label">Buscar por Nombre o Email</label><input type="search" name="search" class="form-control" value="{{ filters.search or '' }}"></div>
+                    <div class="col-md-4"><label class="form-label">Rol</label><select name="rol" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="Usuario" {% if filters.rol == 'Usuario' %}selected{% endif %}>Usuario</option>
+                        <option value="Técnico Nivel 1" {% if filters.rol == 'Técnico Nivel 1' %}selected{% endif %}>Técnico Nivel 1</option>
+                        <option value="Técnico Nivel 2" {% if filters.rol == 'Técnico Nivel 2' %}selected{% endif %}>Técnico Nivel 2</option>
+                    </select></div>
+                    <div class="col-md-3 d-flex">
+                        <button type="submit" class="btn btn-primary me-2"><i class="bi bi-filter"></i> Filtrar</button>
+                        <a href="{{ url_for('tecnico_usuarios') }}" class="btn btn-secondary"><i class="bi bi-x-lg"></i> Limpiar</a>
+                    </div>
+                </div>
+            </form>
         </div>
-      </div>
+    </div>
 
-      <!-- Tabla de usuarios -->
-      <div class="card shadow-sm">
-        <div class="card-body">
-          <div class="table-responsive">
-            <table class="table table-striped table-hover align-middle">
-              <thead>
-                <tr>
-                  <th>Nombre</th>
-                  <th>Correo</th>
-                  <th>Rol</th>
-                  <th>Estado</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                <!-- Datos simulados -->
-                <tr>
-                  <td>Juan Pérez</td>
-                  <td>juan.perez@empresa.com</td>
-                  <td><span class="badge bg-info text-dark">Usuario</span></td>
-                  <td><span class="badge bg-success">Activo</span></td>
-                  <td>
-                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalRol"><i class="bi bi-person-gear"></i></button>
-                    <button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalEstado"><i class="bi bi-toggle-on"></i></button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>María Gómez</td>
-                  <td>maria.gomez@empresa.com</td>
-                  <td><span class="badge bg-warning text-dark">Técnico</span></td>
-                  <td><span class="badge bg-danger">Inactivo</span></td>
-                  <td>
-                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalRol"><i class="bi bi-person-gear"></i></button>
-                    <button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalEstado"><i class="bi bi-toggle-off"></i></button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-striped table-hover align-middle">
+            <thead><tr><th>Nombre</th><th>RUT</th><th>Email</th><th>Rol</th><th>Acciones</th></tr></thead>
+            <tbody>
+              {% for usuario in pagination.items %}
+              <tr>
+                <td>{{ usuario.nombre }}</td>
+                <td>{{ usuario.rut }}</td>
+                <td>{{ usuario.email }}</td>
+                <td><span class="badge bg-secondary">{{ usuario.rol }}</span></td>
+                <td>
+                  <button class="btn btn-sm btn-outline-primary edit-btn" data-bs-toggle="modal" data-bs-target="#modalEditarUsuario"
+                          data-id="{{ usuario.id }}" data-nombre="{{ usuario.nombre }}" data-rut="{{ usuario.rut }}" data-email="{{ usuario.email }}" data-rol="{{ usuario.rol }}">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  {% if usuario.id != session.usuario_id %}<button class="btn btn-sm btn-outline-danger delete-btn" data-bs-toggle="modal" data-bs-target="#modalEliminarUsuario" data-id="{{ usuario.id }}"><i class="bi bi-trash"></i></button>{% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="5" class="text-center text-muted p-4">No se encontraron usuarios.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
         </div>
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}"><a class="page-link" href="{{ url_for('tecnico_usuarios', page=pagination.prev_num, **filters) }}">Anterior</a></li>
+                {% for page_num in pagination.iter_pages() %}
+                    {% if page_num %}<li class="page-item {% if page_num == pagination.page %}active{% endif %}"><a class="page-link" href="{{ url_for('tecnico_usuarios', page=page_num, **filters) }}">{{ page_num }}</a></li>{% endif %}
+                {% endfor %}
+                <li class="page-item {% if not pagination.has_next %}disabled{% endif %}"><a class="page-link" href="{{ url_for('tecnico_usuarios', page=pagination.next_num, **filters) }}">Siguiente</a></li>
+            </ul>
+        </nav>
       </div>
-
-      <!-- Modal Cambiar Rol -->
-      <div class="modal fade" id="modalRol" tabindex="-1" aria-labelledby="modalRolLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-              <h5 class="modal-title" id="modalRolLabel"><i class="bi bi-person-gear"></i> Cambiar Rol</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <select class="form-select">
-                <option>Usuario</option>
-                <option>Técnico</option>
-                <option>Administrador</option>
-              </select>
-            </div>
-            <div class="modal-footer">
-              <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-              <button class="btn btn-primary">Guardar</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Modal Cambiar Estado -->
-      <div class="modal fade" id="modalEstado" tabindex="-1" aria-labelledby="modalEstadoLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header bg-warning text-dark">
-              <h5 class="modal-title" id="modalEstadoLabel"><i class="bi bi-toggle-on"></i> Cambiar Estado</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <select class="form-select">
-                <option>Activo</option>
-                <option>Inactivo</option>
-              </select>
-            </div>
-            <div class="modal-footer">
-              <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-              <button class="btn btn-primary">Guardar</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </main>
-  </div>
+    </div>
+  </main>
 </div>
+
+<div class="modal fade" id="modalCrearUsuario" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ url_for('tecnico_usuarios') }}" method="POST">
+                <div class="modal-header"><h5 class="modal-title">Crear Nuevo Usuario</h5></div>
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">RUT</label><input type="text" class="form-control" name="rut" id="rut_crear" placeholder="12.345.678-9" maxlength="12" required></div>
+                    <div class="mb-3"><label class="form-label">Nombre Completo</label><input type="text" class="form-control" name="nombre" required></div>
+                    <div class="mb-3"><label class="form-label">Email</label><input type="email" class="form-control" name="email" required></div>
+                    <div class="mb-3"><label class="form-label">Contraseña</label><input type="password" class="form-control" name="password" required></div>
+                    <div class="mb-3"><label class="form-label">Rol</label><select name="rol" class="form-select">
+                        <option>Usuario</option><option>Técnico Nivel 1</option><option>Técnico Nivel 2</option>
+                    </select></div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Crear</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEditarUsuario" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ url_for('editar_usuario') }}" method="POST">
+                <div class="modal-header"><h5 class="modal-title">Editar Usuario</h5></div>
+                <div class="modal-body">
+                    <input type="hidden" name="id_usuario_edit" id="id_usuario_edit">
+                    <div class="mb-3"><label class="form-label">RUT</label><input type="text" class="form-control" name="rut_edit" id="rut_edit" maxlength="12" required></div>
+                    <div class="mb-3"><label class="form-label">Nombre Completo</label><input type="text" class="form-control" name="nombre_edit" id="nombre_edit" required></div>
+                    <div class="mb-3"><label class="form-label">Email</label><input type="email" class="form-control" name="email_edit" id="email_edit" required></div>
+                    <div class="mb-3"><label class="form-label">Rol</label><select name="rol_edit" id="rol_edit" class="form-select">
+                        <option>Usuario</option><option>Técnico Nivel 1</option><option>Técnico Nivel 2</option>
+                    </select></div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Actualizar</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEliminarUsuario" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ url_for('eliminar_usuario') }}" method="POST">
+                <div class="modal-header bg-danger text-white"><h5 class="modal-title">Confirmar Eliminación</h5></div>
+                <div class="modal-body"><p>¿Estás seguro de que quieres eliminar este usuario?</p><input type="hidden" name="id_usuario_delete" id="id_usuario_delete"></div>
+                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-danger">Eliminar</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var editModal = document.getElementById('modalEditarUsuario');
+    editModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+        document.getElementById('id_usuario_edit').value = button.getAttribute('data-id');
+        document.getElementById('rut_edit').value = button.getAttribute('data-rut');
+        document.getElementById('nombre_edit').value = button.getAttribute('data-nombre');
+        document.getElementById('email_edit').value = button.getAttribute('data-email');
+        document.getElementById('rol_edit').value = button.getAttribute('data-rol');
+    });
+
+    var deleteModal = document.getElementById('modalEliminarUsuario');
+    deleteModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+        document.getElementById('id_usuario_delete').value = button.getAttribute('data-id');
+    });
+    
+    const formatRut = (rut) => {
+        rut = rut.replace(/[^0-9kK]/g, '');
+        if (rut.length === 0) return '';
+        let body = rut.slice(0, -1);
+        let verifier = rut.slice(-1).toUpperCase();
+        let formattedBody = body.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        return formattedBody + '-' + verifier;
+    };
+    
+    const rutCrearInput = document.getElementById('rut_crear');
+    rutCrearInput.addEventListener('input', (e) => { e.target.value = formatRut(e.target.value); });
+
+    const rutEditarInput = document.getElementById('rut_edit');
+    rutEditarInput.addEventListener('input', (e) => { e.target.value = formatRut(e.target.value); });
+});
+</script>
 {% endblock %}

@@ -1,159 +1,102 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard Técnico - Ticketera{% endblock %}
+{% block title %}Información General - Ticketera{% endblock %}
 
 {% block content %}
 <div class="container-fluid fade-in">
-  <div class="row">
-    <!-- Sidebar -->
-    {% include 'partials/sidebar_tecnico.html' %}
+  <main class="px-md-4 py-4">
+    <h2 class="mb-1"><i class="bi bi-speedometer2"></i> Información General</h2>
+    <p class="text-muted mb-0">Vista general de tickets y métricas clave del sistema</p>
 
-
-    <!-- Contenido principal -->
-    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-      <h2 class="mt-4"><i class="bi bi-speedometer2"></i> Dashboard Técnico</h2>
-      <p class="text-muted">Vista general de tickets y métricas clave.</p>
-
-      <!-- Tarjetas KPI -->
-      <div class="row my-4">
-        <div class="col-md-3">
-          <div class="card text-white bg-primary mb-3">
-            <div class="card-body">
-              <h5 class="card-title"><i class="bi bi-hourglass-split"></i> Pendientes</h5>
-              <p class="card-text fs-3">12</p>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card text-white bg-warning mb-3">
-            <div class="card-body">
-              <h5 class="card-title"><i class="bi bi-arrow-repeat"></i> En Proceso</h5>
-              <p class="card-text fs-3">8</p>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card text-white bg-success mb-3">
-            <div class="card-body">
-              <h5 class="card-title"><i class="bi bi-check-circle-fill"></i> Cerrados</h5>
-              <p class="card-text fs-3">25</p>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card text-white bg-info mb-3">
-            <div class="card-body">
-              <h5 class="card-title"><i class="bi bi-graph-up"></i> SLA Cumplido</h5>
-              <p class="card-text fs-3">92%</p>
-            </div>
+    <div class="row my-4">
+      <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-danger shadow-sm h-100">
+          <div class="card-body">
+            <h6 class="card-title text-muted mb-2"><i class="bi bi-hourglass-split text-danger"></i> Pendientes</h6>
+            <h3 class="mb-0 text-danger">{{ stats.pendientes }}</h3>
           </div>
         </div>
       </div>
-
-      <!-- Gráficos -->
-      <div class="row">
-        <div class="col-md-6 mb-4">
-          <div class="card shadow-sm">
-            <div class="card-header bg-dark text-white">
-              <i class="bi bi-bar-chart"></i> Tickets por Estado
-            </div>
-            <div class="card-body">
-              <canvas id="chartEstado"></canvas>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-6 mb-4">
-          <div class="card shadow-sm">
-            <div class="card-header bg-dark text-white">
-              <i class="bi bi-calendar-week"></i> Tickets por Semana
-            </div>
-            <div class="card-body">
-              <canvas id="chartSemana"></canvas>
-            </div>
+      <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-warning shadow-sm h-100">
+          <div class="card-body">
+            <h6 class="card-title text-muted mb-2"><i class="bi bi-arrow-repeat text-warning"></i> En Proceso</h6>
+            <h3 class="mb-0 text-warning">{{ stats.en_proceso }}</h3>
           </div>
         </div>
       </div>
-
-      <!-- Tabla de últimos tickets -->
-      <div class="card shadow-sm">
-        <div class="card-header bg-dark text-white">
-          <i class="bi bi-list-task"></i> Últimos Tickets
-        </div>
-        <div class="card-body">
-          <div class="table-responsive">
-            <table class="table table-striped table-hover align-middle">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Usuario</th>
-                  <th>Asunto</th>
-                  <th>Prioridad</th>
-                  <th>Estado</th>
-                  <th>Asignado</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>101</td>
-                  <td>Juan Pérez</td>
-                  <td>Error en VPN</td>
-                  <td><span class="badge bg-danger">Crítica</span></td>
-                  <td><span class="badge bg-warning text-dark">En Proceso</span></td>
-                  <td>Pedro López</td>
-                </tr>
-                <tr>
-                  <td>102</td>
-                  <td>María Gómez</td>
-                  <td>Problema de acceso</td>
-                  <td><span class="badge bg-info text-dark">Media</span></td>
-                  <td><span class="badge bg-success">Cerrado</span></td>
-                  <td>Pedro López</td>
-                </tr>
-                <tr>
-                  <td>103</td>
-                  <td>Carlos Díaz</td>
-                  <td>Error en sistema</td>
-                  <td><span class="badge bg-warning text-dark">Alta</span></td>
-                  <td><span class="badge bg-danger">Pendiente</span></td>
-                  <td>Pedro López</td>
-                </tr>
-              </tbody>
-            </table>
+      <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-success shadow-sm h-100">
+          <div class="card-body">
+            <h6 class="card-title text-muted mb-2"><i class="bi bi-check-circle-fill text-success"></i> Cerrados (Total)</h6>
+            <h3 class="mb-0 text-success">{{ stats.cerrados_hoy }}</h3>
           </div>
         </div>
       </div>
-    </main>
-  </div>
+      <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-info shadow-sm h-100">
+          <div class="card-body">
+            <h6 class="card-title text-muted mb-2"><i class="bi bi-graph-up text-info"></i> SLA Cumplido</h6>
+            <h3 class="mb-0 text-info">{{ stats.sla_cumplido }}%</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="row">
+      <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm h-100">
+          <div class="card-header bg-white border-bottom">
+            <h5 class="card-title mb-0"><i class="bi bi-pie-chart text-primary"></i> Tickets por Estado</h5>
+          </div>
+          <div class="card-body"><canvas id="chartEstado" height="250"></canvas></div>
+        </div>
+      </div>
+      <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm h-100">
+          <div class="card-header bg-white border-bottom">
+            <h5 class="card-title mb-0"><i class="bi bi-bar-chart text-primary"></i> Tickets por Categoría</h5>
+          </div>
+          <div class="card-body"><canvas id="chartCategoria" height="250"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </main>
 </div>
 
-<!-- Scripts de Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  // Tickets por Estado
-  new Chart(document.getElementById('chartEstado'), {
-    type: 'doughnut',
-    data: {
-      labels: ['Pendiente', 'En Proceso', 'Cerrado'],
-      datasets: [{
-        data: [12, 8, 25],
-        backgroundColor: ['#dc3545', '#ffc107', '#198754']
-      }]
-    }
-  });
+document.addEventListener('DOMContentLoaded', function() {
+    const chartData = {{ chart_data|tojson }};
+    
+    // Gráfico de Tickets por Estado
+    new Chart(document.getElementById('chartEstado'), {
+      type: 'doughnut',
+      data: {
+        labels: chartData.estados_labels,
+        datasets: [{
+          data: chartData.estados_data,
+          backgroundColor: ['#dc3545', '#ffc107', '#198754'], // Abierto, En Proceso, Cerrado
+          borderWidth: 2,
+          borderColor: '#fff'
+        }]
+      },
+      options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    });
 
-  // Tickets por Semana
-  new Chart(document.getElementById('chartSemana'), {
-    type: 'line',
-    data: {
-      labels: ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4'],
-      datasets: [{
-        label: 'Tickets',
-        data: [15, 20, 18, 25],
-        borderColor: '#0d6efd',
-        fill: false,
-        tension: 0.1
-      }]
-    }
-  });
+    // Gráfico de Tickets por Categoría
+    new Chart(document.getElementById('chartCategoria'), {
+      type: 'bar',
+      data: {
+        labels: chartData.categorias_labels,
+        datasets: [{
+          label: 'Nº de Tickets',
+          data: chartData.categorias_data,
+          backgroundColor: 'rgba(13, 110, 253, 0.6)'
+        }]
+      },
+      options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+});
 </script>
 {% endblock %}

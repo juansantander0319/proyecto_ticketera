@@ -1,124 +1,42 @@
-{% extends "base.html" %}
+{% extends "base_usuario.html" %}
 
 {% block title %}Base de Conocimiento - Ticketera{% endblock %}
 
 {% block content %}
 <div class="container-fluid fade-in">
-  <div class="row">
-    <!-- Sidebar -->
-    {% include 'partials/sidebar_usuario.html' %}
+  <main class="px-md-4 py-4">
+    <h2 class="mt-4"><i class="bi bi-journal-text"></i> Base de Conocimiento</h2>
+    <p class="text-muted">Encuentra guías y soluciones a problemas comunes.</p>
 
-    <!-- Contenido principal -->
-    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-      <h2 class="mt-4"><i class="bi bi-journal-text"></i> Base de Conocimiento</h2>
-      <p class="text-muted">Encuentra guías y soluciones a problemas comunes.</p>
-
-      <!-- Buscador -->
-      <div class="input-group mb-4">
-        <input type="text" class="form-control" placeholder="Buscar artículo...">
-        <button class="btn btn-primary"><i class="bi bi-search"></i> Buscar</button>
+    <form method="GET" action="{{ url_for('usuario_faq') }}">
+      <div class="input-group mb-4 shadow-sm">
+        <input type="search" class="form-control" name="query" placeholder="Buscar un artículo..." value="{{ query or '' }}">
+        <button class="btn btn-primary" type="submit"><i class="bi bi-search"></i> Buscar</button>
       </div>
+    </form>
 
-      <!-- Lista de artículos -->
-      <div class="list-group">
-        <!-- Artículo 1 -->
-        <a href="#" class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#modalArticulo1">
-          <div class="d-flex w-100 justify-content-between">
-            <h5 class="mb-1">Cómo resetear tu contraseña</h5>
-            <small class="text-muted">Actualizado hace 2 días</small>
-          </div>
-          <p class="mb-1">Guía paso a paso para restablecer tu contraseña de acceso al sistema.</p>
-          <small class="text-muted">Categoría: Accesos</small>
-        </a>
-
-        <!-- Artículo 2 -->
-        <a href="#" class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#modalArticulo2">
-          <div class="d-flex w-100 justify-content-between">
-            <h5 class="mb-1">Configurar impresora en red</h5>
-            <small class="text-muted">Actualizado hace 1 semana</small>
-          </div>
-          <p class="mb-1">Pasos para instalar y configurar una impresora compartida en la red corporativa.</p>
-          <small class="text-muted">Categoría: Impresoras</small>
-        </a>
-
-        <!-- Artículo 3 -->
-        <a href="#" class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#modalArticulo3">
-          <div class="d-flex w-100 justify-content-between">
-            <h5 class="mb-1">Solución a problemas de VPN</h5>
-            <small class="text-muted">Actualizado hace 3 semanas</small>
-          </div>
-          <p class="mb-1">Cómo diagnosticar y resolver problemas de conexión a la VPN.</p>
-          <small class="text-muted">Categoría: Redes</small>
-        </a>
-      </div>
-
-      <!-- Modales de artículos -->
-      <div class="modal fade" id="modalArticulo1" tabindex="-1" aria-labelledby="modalArticulo1Label" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-              <h5 class="modal-title" id="modalArticulo1Label">Cómo resetear tu contraseña</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <ol>
-                <li>Accede a la página de inicio de sesión.</li>
-                <li>Haz clic en "¿Olvidaste tu contraseña?".</li>
-                <li>Introduce tu correo corporativo y sigue las instrucciones.</li>
-                <li>Revisa tu bandeja de entrada para el enlace de restablecimiento.</li>
-              </ol>
-            </div>
-            <div class="modal-footer">
-              <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+    <div class="accordion" id="faqAccordion">
+      {% if not articulos %}
+        <p class="text-center text-muted">No se encontraron artículos. Intenta con otra búsqueda.</p>
+      {% else %}
+        {% for articulo in articulos %}
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="heading{{ loop.index }}">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}">
+              {{ articulo.titulo }}
+            </button>
+          </h2>
+          <div id="collapse{{ loop.index }}" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">
+              <p><strong>Categoría:</strong> <span class="badge bg-secondary">{{ articulo.categoria_faq }}</span></p>
+              <hr>
+              {{ articulo.contenido|safe }}
             </div>
           </div>
         </div>
-      </div>
-
-      <div class="modal fade" id="modalArticulo2" tabindex="-1" aria-labelledby="modalArticulo2Label" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-              <h5 class="modal-title" id="modalArticulo2Label">Configurar impresora en red</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <ol>
-                <li>Abre el panel de control de tu equipo.</li>
-                <li>Selecciona "Dispositivos e impresoras".</li>
-                <li>Haz clic en "Agregar impresora" y selecciona la impresora de la lista.</li>
-                <li>Instala los controladores si es necesario.</li>
-              </ol>
-            </div>
-            <div class="modal-footer">
-              <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal fade" id="modalArticulo3" tabindex="-1" aria-labelledby="modalArticulo3Label" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-              <h5 class="modal-title" id="modalArticulo3Label">Solución a problemas de VPN</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <ol>
-                <li>Verifica tu conexión a internet.</li>
-                <li>Abre el cliente VPN y revisa la configuración.</li>
-                <li>Si el problema persiste, contacta con el equipo TI.</li>
-              </ol>
-            </div>
-            <div class="modal-footer">
-              <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </main>
-  </div>
+        {% endfor %}
+      {% endif %}
+    </div>
+  </main>
 </div>
 {% endblock %}

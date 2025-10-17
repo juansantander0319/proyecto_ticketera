@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de FAQ - Ticketera{% endblock %}
+
+{% block content %}
+<div class="container-fluid fade-in">
+    <h2 class="mt-4"><i class="bi bi-journal-plus"></i> Gestión de la Base de Conocimiento</h2>
+    <p class="text-muted">Crea, edita y elimina artículos para el FAQ de los usuarios.</p>
+
+    <div class="mb-3 text-end">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNuevoArticulo"><i class="bi bi-plus-circle"></i> Nuevo Artículo</button>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <table class="table table-hover">
+                <thead><tr><th>Título</th><th>Categoría</th><th>Acciones</th></tr></thead>
+                <tbody>
+                    {% for articulo in articulos %}
+                    <tr>
+                        <td>{{ articulo.titulo }}</td>
+                        <td>{{ articulo.categoria_faq }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary edit-btn" data-bs-toggle="modal" data-bs-target="#modalEditarArticulo"
+                                data-id="{{ articulo.id }}" data-titulo="{{ articulo.titulo }}" data-contenido="{{ articulo.contenido }}" data-categoria="{{ articulo.categoria_faq }}">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger delete-btn" data-bs-toggle="modal" data-bs-target="#modalEliminarArticulo" data-id="{{ articulo.id }}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalNuevoArticulo" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form action="{{ url_for('tecnico_faq_gestion') }}" method="POST">
+                <div class="modal-header"><h5 class="modal-title">Nuevo Artículo</h5></div>
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">Título</label><input type="text" class="form-control" name="titulo" required></div>
+                    <div class="mb-3"><label class="form-label">Categoría</label><input type="text" class="form-control" name="categoria_faq" placeholder="Ej: Redes, Software, Impresoras" required></div>
+                    <div class="mb-3"><label class="form-label">Contenido</label><textarea class="form-control" name="contenido" rows="5" required></textarea></div>
+                </div>
+                <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEditarArticulo" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form action="{{ url_for('editar_articulo') }}" method="POST">
+                <div class="modal-header"><h5 class="modal-title">Editar Artículo</h5></div>
+                <div class="modal-body">
+                    <input type="hidden" name="id_articulo_edit" id="id_articulo_edit">
+                    <div class="mb-3"><label class="form-label">Título</label><input type="text" class="form-control" name="titulo_edit" id="titulo_edit" required></div>
+                    <div class="mb-3"><label class="form-label">Categoría</label><input type="text" class="form-control" name="categoria_faq_edit" id="categoria_faq_edit" required></div>
+                    <div class="mb-3"><label class="form-label">Contenido</label><textarea class="form-control" name="contenido_edit" id="contenido_edit" rows="5" required></textarea></div>
+                </div>
+                <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Actualizar</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEliminarArticulo" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ url_for('eliminar_articulo') }}" method="POST">
+                <div class="modal-header bg-danger text-white"><h5 class="modal-title">Confirmar Eliminación</h5></div>
+                <div class="modal-body"><p>¿Estás seguro de que quieres eliminar este artículo?</p><input type="hidden" name="id_articulo_delete" id="id_articulo_delete"></div>
+                <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-danger">Eliminar</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var editModal = document.getElementById('modalEditarArticulo');
+    editModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+        document.getElementById('id_articulo_edit').value = button.getAttribute('data-id');
+        document.getElementById('titulo_edit').value = button.getAttribute('data-titulo');
+        document.getElementById('contenido_edit').value = button.getAttribute('data-contenido');
+        document.getElementById('categoria_faq_edit').value = button.getAttribute('data-categoria');
+    });
+
+    var deleteModal = document.getElementById('modalEliminarArticulo');
+    deleteModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+        document.getElementById('id_articulo_delete').value = button.getAttribute('data-id');
+    });
+});
+</script>
+{% endblock %}

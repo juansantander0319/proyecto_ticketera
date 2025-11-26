@@ -5,13 +5,22 @@
 {% block content %}
 <div class="container-fluid fade-in">
     <h2 class="mt-4"><i class="bi bi-ticket-detailed"></i> Detalle del Ticket #{{ ticket.id }}</h2>
+    
+    {% if ticket.estado != 'Cerrado' and ticket.fecha_vencimiento_sla < now %}
+    <div class="alert alert-danger d-flex align-items-center mt-3" role="alert">
+      <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2"></i>
+      <div><strong>¡ATENCIÓN!</strong> Este ticket ha excedido su tiempo de resolución SLA.</div>
+    </div>
+    {% endif %}
+
     <div class="row mt-4">
         <div class="col-lg-8">
             <div class="card shadow-sm mb-4">
                 <div class="card-header"><h5 class="mb-0">{{ ticket.asunto }}</h5></div>
                 <div class="card-body">
                     <p><strong>Descripción Inicial:</strong></p>
-                    <p style="white-space: pre-wrap;">{{ ticket.descripcion }}</p>
+                    <div class="border p-3 rounded bg-light">{{ ticket.descripcion|safe }}</div>
+                    
                     {% if ticket.adjuntos %}<hr><p><strong>Archivos Adjuntos:</strong></p>
                     <ul class="list-group">{% for adjunto in ticket.adjuntos %}<li class="list-group-item"><a href="{{ url_for('download_file', filename=adjunto.nombre_archivo) }}"><i class="bi bi-paperclip"></i> {{ adjunto.nombre_archivo.split('_', 1)[1] }}</a></li>{% endfor %}</ul>
                     {% endif %}
@@ -22,12 +31,20 @@
             <div class="card mb-3 {% if comentario.autor.rol != 'Usuario' %}bg-light{% endif %}">
                 <div class="card-body">
                     <div class="d-flex justify-content-between"><p class="card-title mb-1"><strong>{{ comentario.autor.nombre }}</strong> ({{ comentario.autor.rol }})</p><small class="text-muted">{{ comentario.fecha_creacion.strftime('%d-%m-%Y %H:%M') }}</small></div>
-                    <p class="card-text">{{ comentario.contenido }}</p>
+                    <div class="card-text mt-2">{{ comentario.contenido|safe }}</div>
                 </div>
             </div>
             {% endfor %}
             {% if ticket.estado != 'Cerrado' %}
-            <div class="card shadow-sm mt-4"><div class="card-body"><h5 class="card-title">Añadir una respuesta</h5><form action="{{ url_for('ticket_detalle', ticket_id=ticket.id) }}" method="POST"><div class="mb-3"><textarea name="contenido" class="form-control" rows="4" required></textarea></div><div class="text-end"><button type="submit" class="btn btn-primary">Enviar Respuesta</button></div></form></div></div>
+            <div class="card shadow-sm mt-4">
+                <div class="card-body">
+                    <h5 class="card-title">Añadir una respuesta</h5>
+                    <form action="{{ url_for('ticket_detalle', ticket_id=ticket.id) }}" method="POST">
+                        <div class="mb-3"><textarea name="contenido" class="form-control summernote" required></textarea></div>
+                        <div class="text-end"><button type="submit" class="btn btn-primary">Enviar Respuesta</button></div>
+                    </form>
+                </div>
+            </div>
             {% else %}
             <div class="alert alert-info mt-4"><i class="bi bi-info-circle-fill"></i> Este ticket está cerrado.</div>
             {% endif %}
@@ -39,7 +56,23 @@
                     <h5 class="card-title">Información</h5>
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item"><strong>Estado:</strong><span class="badge bg-{% if ticket.estado == 'Cerrado' %}success{% elif ticket.estado == 'En Proceso' %}warning text-dark{% else %}danger{% endif %}">{{ ticket.estado }}</span></li>
-                        <li class="list-group-item"><strong>Vencimiento SLA:</strong><span class="{% if ticket.fecha_vencimiento_sla < now %}text-danger fw-bold{% endif %}">{{ ticket.fecha_vencimiento_sla.strftime('%d-%m-%Y %H:%M') if ticket.fecha_vencimiento_sla }}</span></li>
+                        
+                        <li class="list-group-item {% if ticket.estado != 'Cerrado' and ticket.fecha_vencimiento_sla < now %}bg-danger-subtle text-danger border-danger{% endif %}">
+                            <strong>Vencimiento SLA:</strong><br>
+                            {% if ticket.fecha_vencimiento_sla %}
+                                {{ ticket.fecha_vencimiento_sla.strftime('%d-%m-%Y %H:%M') }}
+                                
+                                <!-- AQUÍ ESTÁ EL BADGE DE LA API -->
+                                {% if ticket.es_sla_extendido %}
+                                    <span class="badge bg-info text-dark mt-1" title="Calculado con API Feriados"><i class="bi bi-calendar-check"></i> Ajustado (Feriados)</span>
+                                {% endif %}
+
+                                {% if ticket.estado != 'Cerrado' and ticket.fecha_vencimiento_sla < now %}
+                                    <i class="bi bi-exclamation-circle-fill ms-1"></i> Vencido
+                                {% endif %}
+                            {% endif %}
+                        </li>
+
                         <li class="list-group-item"><strong>Asignado a:</strong> {% if ticket.tecnico_asignado %}{{ ticket.tecnico_asignado.nombre }}{% else %}<span class="text-muted">Aún no asignado</span>{% endif %}</li>
                     </ul>
                     

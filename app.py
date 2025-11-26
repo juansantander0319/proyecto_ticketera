@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory, send_file
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import or_, func
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -8,23 +8,80 @@ from functools import wraps
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import logging
+import pandas as pd
+import io
+import requests  # NUEVO: Para consumir la API
 
 # --- CONFIGURACIONES ---
-load_dotenv() # Carga las variables del archivo .env
+load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "una_clave_secreta_de_respaldo_por_si_falla_dotenv")
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'uploads')
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'pdf', 'txt'}
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'pdf', 'txt', 'xlsx', 'docx'}
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-# --- CONFIGURACIÓN DE LOGGING ---
 logging.basicConfig(filename='error.log', level=logging.ERROR,
                     format='%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
 
 db = SQLAlchemy(app)
+
+# --- CACHÉ DE FERIADOS (Para no saturar la API) ---
+FERIADOS_CACHE = {} 
+
+def obtener_feriados(anio):
+    """Consulta la API de Gobierno Digital y guarda los feriados en memoria."""
+    if anio in FERIADOS_CACHE:
+        return FERIADOS_CACHE[anio]
+    
+    try:
+        url = f"https://apis.digital.gob.cl/fl/feriados/{anio}"
+        response = requests.get(url, headers={'User-Agent': 'Ticketera-Tesis-v1.0'})
+        if response.status_code == 200:
+            datos = response.json()
+            # Guardamos solo las fechas como strings 'YYYY-MM-DD'
+            feriados = [item['fecha'] for item in datos]
+            FERIADOS_CACHE[anio] = feriados
+            print(f"✅ Feriados {anio} cargados desde API: {len(feriados)} días.")
+            return feriados
+    except Exception as e:
+        print(f"⚠️ Error consultando API Feriados: {e}")
+    
+    return []
+
+def es_dia_habil(fecha):
+    """Devuelve False si es Sábado, Domingo o Feriado."""
+    # 1. Fin de semana (Saturday=5, Sunday=6)
+    if fecha.weekday() >= 5:
+        return False
+    
+    # 2. Feriado API
+    str_fecha = fecha.strftime('%Y-%m-%d')
+    feriados = obtener_feriados(fecha.year)
+    if str_fecha in feriados:
+        return False
+        
+    return True
+
+def calcular_vencimiento_realista(horas_sla):
+    """Suma horas al tiempo actual saltándose fines de semana y feriados."""
+    fecha_actual = datetime.utcnow() # Ojo: Idealmente usar hora local de Chile
+    horas_restantes = horas_sla
+    
+    while horas_restantes > 0:
+        fecha_actual += timedelta(hours=1)
+        # Si al sumar 1 hora caemos en un día NO hábil, avanzamos hasta el siguiente día hábil a las 9 AM
+        if not es_dia_habil(fecha_actual):
+            # Avanzamos de a 1 día hasta encontrar un hábil
+            while not es_dia_habil(fecha_actual):
+                fecha_actual += timedelta(days=1)
+            # Reseteamos a inicio de jornada (opcional, simplificado aquí solo saltamos días)
+        
+        horas_restantes -= 1
+        
+    return fecha_actual
 
 # --- MODELOS DE LA BASE DE DATOS ---
 class Usuario(db.Model):
@@ -35,11 +92,13 @@ class Usuario(db.Model):
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     rol = db.Column(db.String(20), nullable=False, default='Usuario')
-    tickets_creados = db.relationship('Ticket', backref='creador', lazy=True, foreign_keys='Ticket.usuario_id')
+    
+    tickets_creados = db.relationship('Ticket', backref='creador', lazy=True, foreign_keys='Ticket.usuario_id', cascade="all, delete-orphan")
     tickets_asignados = db.relationship('Ticket', backref='tecnico_asignado', lazy=True, foreign_keys='Ticket.tecnico_id')
     activos_asignados = db.relationship('Activo', backref='asignado_a', lazy=True)
-    notificaciones = db.relationship('Notificacion', backref='usuario', lazy=True)
-    comentarios = db.relationship('Comentario', backref='autor', lazy=True)
+    notificaciones = db.relationship('Notificacion', backref='usuario', lazy=True, cascade="all, delete-orphan")
+    comentarios = db.relationship('Comentario', backref='autor', lazy=True, cascade="all, delete-orphan")
+    logs = db.relationship('LogAuditoria', backref='usuario', lazy=True)
 
 class Categoria(db.Model):
     __tablename__ = 'categorias'
@@ -59,6 +118,7 @@ class Ticket(db.Model):
     fecha_creacion = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp())
     fecha_vencimiento_sla = db.Column(db.DateTime, nullable=True)
     fecha_cierre = db.Column(db.DateTime, nullable=True)
+    es_sla_extendido = db.Column(db.Boolean, default=False) # NUEVO: Para marcar si se usó la API
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
     tecnico_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=True)
     categoria_id = db.Column(db.Integer, db.ForeignKey('categorias.id'), nullable=False)
@@ -106,6 +166,15 @@ class Adjunto(db.Model):
     nombre_archivo = db.Column(db.String(255), nullable=False)
     ticket_id = db.Column(db.Integer, db.ForeignKey('tickets.id'), nullable=False)
 
+class LogAuditoria(db.Model):
+    __tablename__ = 'logs_auditoria'
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=True)
+    usuario_nombre_backup = db.Column(db.String(100))
+    accion = db.Column(db.String(50), nullable=False)
+    detalles = db.Column(db.Text)
+    fecha = db.Column(db.DateTime, default=db.func.current_timestamp())
+
 # --- FUNCIONES Y DECORADORES ---
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -130,7 +199,20 @@ def role_required(roles):
         return decorated_function
     return decorator
 
-# --- CONTEXT PROCESSOR ---
+def registrar_log(accion, detalles):
+    try:
+        user_id = session.get('usuario_id')
+        user_nombre = session.get('usuario_nombre', 'Sistema')
+        nuevo_log = LogAuditoria(
+            usuario_id=user_id,
+            usuario_nombre_backup=user_nombre,
+            accion=accion,
+            detalles=detalles
+        )
+        db.session.add(nuevo_log)
+    except Exception as e:
+        print(f"Error registrando log: {e}")
+
 @app.context_processor
 def inject_global_vars():
     unread_count = 0
@@ -138,7 +220,6 @@ def inject_global_vars():
         unread_count = Notificacion.query.filter_by(usuario_id=session['usuario_id'], leida=False).count()
     return dict(unread_notifications=unread_count, now=datetime.utcnow())
 
-# --- LÓGICA DE ASIGNACIÓN AUTOMÁTICA ---
 LAST_INDEX_FILE = 'last_technician_index.txt'
 
 def get_next_technician_id():
@@ -155,7 +236,7 @@ def get_next_technician_id():
         f.write(str(next_index))
     return tecnicos_n1[next_index].id
 
-# --- RUTAS PRINCIPALES ---
+# --- RUTAS ---
 @app.route("/", methods=["GET", "POST"])
 def index():
     if "usuario_id" in session:
@@ -183,7 +264,6 @@ def logout():
 def download_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
 
-# --- RUTAS DE USUARIO ---
 @app.route("/usuario")
 @login_required
 @role_required(['Usuario'])
@@ -206,12 +286,22 @@ def usuario_crear_ticket():
         if not categoria:
             flash("Categoría no válida.", "danger")
             return redirect(url_for('usuario_crear_ticket'))
-        fecha_vencimiento = datetime.utcnow() + timedelta(hours=categoria.sla_resolucion)
+        
+        # --- CAMBIO PRINCIPAL: CÁLCULO SLA CON API ---
+        # En lugar de sumar horas simples, usamos la función inteligente
+        fecha_vencimiento_calculada = calcular_vencimiento_realista(categoria.sla_resolucion)
+        
+        # Comparamos para ver si se extendió (solo para feedback visual)
+        fecha_simple = datetime.utcnow() + timedelta(hours=categoria.sla_resolucion)
+        se_extendio = fecha_vencimiento_calculada > (fecha_simple + timedelta(hours=1)) # Margen de 1h
+
         tecnico_asignado_id = get_next_technician_id()
         nuevo_ticket = Ticket(
             asunto=request.form.get('asunto'), categoria_id=categoria_id, prioridad=request.form.get('prioridad'),
             descripcion=request.form.get('descripcion'), usuario_id=session.get('usuario_id'), 
-            fecha_vencimiento_sla=fecha_vencimiento, tecnico_id=tecnico_asignado_id
+            fecha_vencimiento_sla=fecha_vencimiento_calculada,
+            es_sla_extendido=se_extendio, # Guardamos si usó feriados
+            tecnico_id=tecnico_asignado_id
         )
         db.session.add(nuevo_ticket)
         file = request.files.get('adjunto')
@@ -227,8 +317,19 @@ def usuario_crear_ticket():
                 mensaje=f"Se te ha asignado un nuevo ticket: #{nuevo_ticket.id}.",
                 usuario_id=tecnico_asignado_id, ticket_id=nuevo_ticket.id)
             db.session.add(notificacion_tecnico)
+        
+        # Log especial
+        if se_extendio:
+            msg_log = f"Ticket #{nuevo_ticket.id} creado. SLA extendido automáticamente por Feriados/Fin de semana."
+        else:
+            msg_log = f"Ticket #{nuevo_ticket.id} creado."
+        registrar_log("Crear Ticket", msg_log)
+
         db.session.commit()
         flash("Ticket creado y asignado con éxito.", "success")
+        if se_extendio:
+            flash("Aviso: La fecha de vencimiento se ajustó considerando días feriados o fines de semana.", "info")
+            
         return redirect(url_for('usuario_mis_tickets'))
     categorias = Categoria.query.order_by(Categoria.nombre).all()
     return render_template("usuario/usuario_crear_ticket.html", categorias=categorias)
@@ -263,8 +364,6 @@ def usuario_faq():
     return render_template("usuario/usuario_faq.html", articulos=articulos, query=query)
 
 # --- RUTAS DE TÉCNICO ---
-def es_tecnico(): return session.get("rol") in ["Técnico Nivel 1", "Técnico Nivel 2"]
-
 @app.route("/tecnico")
 @login_required
 @role_required(['Técnico Nivel 1', 'Técnico Nivel 2'])
@@ -277,7 +376,11 @@ def tecnico_dashboard():
     tickets_por_estado = db.session.query(Ticket.estado, func.count(Ticket.id)).group_by(Ticket.estado).all()
     tickets_por_categoria = db.session.query(Categoria.nombre, func.count(Ticket.id)).join(Ticket).group_by(Categoria.nombre).all()
     chart_data = {'estados_labels': [item[0] for item in tickets_por_estado], 'estados_data': [item[1] for item in tickets_por_estado], 'categorias_labels': [item[0] for item in tickets_por_categoria], 'categorias_data': [item[1] for item in tickets_por_categoria]}
-    return render_template("tecnico/tecnico_dashboard.html", stats=stats, chart_data=chart_data)
+    
+    # Verificamos si hoy es feriado para mostrar alerta en dashboard
+    es_feriado_hoy = not es_dia_habil(datetime.now())
+    
+    return render_template("tecnico/tecnico_dashboard.html", stats=stats, chart_data=chart_data, es_feriado=es_feriado_hoy)
 
 @app.route("/tecnico/todos")
 @login_required
@@ -400,7 +503,36 @@ def eliminar_articulo():
     db.session.delete(articulo); db.session.commit(); flash('Artículo eliminado con éxito.', 'danger')
     return redirect(url_for('tecnico_faq_gestion'))
 
-# --- RUTAS EXCLUSIVAS TÉCNICO NIVEL 2 ---
+@app.route("/tecnico/calendario")
+@login_required
+@role_required(['Técnico Nivel 1', 'Técnico Nivel 2'])
+def tecnico_calendario():
+    tickets = Ticket.query.all()
+    eventos = []
+    for t in tickets:
+        color = '#dc3545' if t.estado == 'Abierto' else '#ffc107' if t.estado == 'En Proceso' else '#198754'
+        eventos.append({
+            'title': f"#{t.id} {t.asunto}",
+            'start': t.fecha_creacion.isoformat(),
+            'url': url_for('ticket_detalle', ticket_id=t.id),
+            'color': color
+        })
+    return render_template("tecnico/tecnico_calendario.html", eventos=eventos)
+
+@app.route("/tecnico/reportes")
+@login_required
+@role_required(['Técnico Nivel 1', 'Técnico Nivel 2'])
+def tecnico_reportes():
+    tecnicos = db.session.query(Usuario.nombre, func.count(Ticket.id)).join(Ticket, Ticket.tecnico_id == Usuario.id).filter(Ticket.estado == 'Cerrado').group_by(Usuario.nombre).all()
+    categorias = db.session.query(Categoria.nombre, func.count(Ticket.id)).join(Ticket).group_by(Categoria.nombre).all()
+    estados = db.session.query(Ticket.estado, func.count(Ticket.id)).group_by(Ticket.estado).all()
+    chart_data = {
+        'tecnicos_labels': [t[0] for t in tecnicos], 'tecnicos_data': [t[1] for t in tecnicos],
+        'categorias_labels': [c[0] for c in categorias], 'categorias_data': [c[1] for c in categorias],
+        'estados_labels': [e[0] for e in estados], 'estados_data': [e[1] for e in estados]
+    }
+    return render_template("tecnico/tecnico_reportes.html", chart_data=chart_data)
+
 @app.route("/tecnico/usuarios", methods=["GET", "POST"])
 @login_required
 @role_required(['Técnico Nivel 2'])
@@ -408,7 +540,9 @@ def tecnico_usuarios():
     if request.method == "POST":
         hashed_password = generate_password_hash(request.form['password'])
         nuevo = Usuario(rut=request.form['rut'], nombre=request.form['nombre'], email=request.form['email'], password=hashed_password, rol=request.form['rol'])
-        db.session.add(nuevo); db.session.commit(); flash('Usuario creado con éxito.', 'success')
+        db.session.add(nuevo)
+        registrar_log('Crear Usuario', f"Se creó al usuario {nuevo.nombre} con RUT {nuevo.rut} y rol {nuevo.rol}")
+        db.session.commit(); flash('Usuario creado con éxito.', 'success')
         return redirect(url_for('tecnico_usuarios'))
     page = request.args.get('page', 1, type=int)
     query = Usuario.query
@@ -424,6 +558,7 @@ def tecnico_usuarios():
 def editar_usuario():
     usuario = Usuario.query.get_or_404(request.form.get('id_usuario_edit'))
     usuario.rut, usuario.nombre, usuario.email, usuario.rol = request.form['rut_edit'], request.form['nombre_edit'], request.form['email_edit'], request.form['rol_edit']
+    registrar_log('Editar Usuario', f"Se editó al usuario ID {usuario.id}: {usuario.nombre}")
     db.session.commit(); flash('Usuario actualizado con éxito.', 'success')
     return redirect(url_for('tecnico_usuarios'))
 
@@ -436,10 +571,41 @@ def eliminar_usuario():
         flash('No puedes eliminarte a ti mismo.', 'danger')
         return redirect(url_for('tecnico_usuarios'))
     usuario = Usuario.query.get_or_404(usuario_id)
+    registrar_log('Eliminar Usuario', f"Se eliminó al usuario {usuario.nombre} (RUT: {usuario.rut})")
     db.session.delete(usuario); db.session.commit(); flash('Usuario eliminado con éxito.', 'danger')
     return redirect(url_for('tecnico_usuarios'))
 
-# --- RUTAS COMPARTIDAS ---
+@app.route("/tecnico/auditoria")
+@login_required
+@role_required(['Técnico Nivel 2'])
+def tecnico_auditoria():
+    page = request.args.get('page', 1, type=int)
+    logs = LogAuditoria.query.order_by(LogAuditoria.fecha.desc()).paginate(page=page, per_page=20)
+    return render_template("tecnico/tecnico_auditoria.html", pagination=logs)
+
+@app.route("/tecnico/reportes/exportar")
+@login_required
+@role_required(['Técnico Nivel 1', 'Técnico Nivel 2'])
+def exportar_reporte():
+    tickets = Ticket.query.all()
+    data = []
+    for t in tickets:
+        data.append({
+            'ID': t.id, 'Asunto': t.asunto, 'Estado': t.estado, 'Prioridad': t.prioridad,
+            'Creador': t.creador.nombre if t.creador else 'N/A',
+            'Técnico': t.tecnico_asignado.nombre if t.tecnico_asignado else 'Sin asignar',
+            'Categoría': t.categoria.nombre,
+            'Fecha Creación': t.fecha_creacion.strftime('%Y-%m-%d %H:%M'),
+            'Fecha Cierre': t.fecha_cierre.strftime('%Y-%m-%d %H:%M') if t.fecha_cierre else ''
+        })
+    df = pd.DataFrame(data)
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Tickets')
+    output.seek(0)
+    filename = f"reporte_tickets_{datetime.now().strftime('%Y%m%d')}.xlsx"
+    return send_file(output, download_name=filename, as_attachment=True, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
 @app.route("/ticket/<int:ticket_id>", methods=["GET", "POST"])
 @login_required
 def ticket_detalle(ticket_id):
@@ -474,6 +640,7 @@ def ticket_detalle(ticket_id):
 def asignar_ticket(ticket_id):
     ticket, tecnico = Ticket.query.get_or_404(ticket_id), Usuario.query.get(session.get('usuario_id'))
     ticket.tecnico_id = tecnico.id
+    registrar_log('Asignar Ticket', f"El técnico {tecnico.nombre} se auto-asignó el ticket #{ticket.id}")
     notificacion = Notificacion(mensaje=f"El técnico {tecnico.nombre} ha tomado tu ticket #{ticket.id}.", usuario_id=ticket.usuario_id, ticket_id=ticket.id)
     db.session.add(notificacion); db.session.commit(); flash(f"Te has asignado el ticket #{ticket.id}", "success")
     return redirect(url_for('ticket_detalle', ticket_id=ticket.id))
@@ -490,6 +657,7 @@ def reasignar_ticket(ticket_id):
     tecnico_actual_id = ticket.tecnico_id
     ticket.tecnico_id = nuevo_tecnico_id
     nuevo_tecnico = Usuario.query.get(nuevo_tecnico_id)
+    registrar_log('Reasignar Ticket', f"Ticket #{ticket.id} reasignado a {nuevo_tecnico.nombre}")
     notif_nuevo = Notificacion(mensaje=f"Se te ha reasignado el ticket #{ticket.id}.", usuario_id=nuevo_tecnico_id, ticket_id=ticket.id)
     db.session.add(notif_nuevo)
     if tecnico_actual_id and int(tecnico_actual_id) != int(nuevo_tecnico_id):
@@ -505,11 +673,13 @@ def reasignar_ticket(ticket_id):
 def cambiar_estado_ticket(ticket_id):
     ticket, nuevo_estado = Ticket.query.get_or_404(ticket_id), request.form.get('nuevo_estado')
     if ticket.estado != nuevo_estado:
+        estado_anterior = ticket.estado
         ticket.estado = nuevo_estado
         if nuevo_estado == 'Cerrado':
             ticket.fecha_cierre = datetime.utcnow()
         else:
             ticket.fecha_cierre = None
+        registrar_log('Cambio Estado Ticket', f"Ticket #{ticket.id} cambió de {estado_anterior} a {nuevo_estado}")
         notificacion = Notificacion(mensaje=f"El estado de tu ticket #{ticket.id} ha cambiado a '{nuevo_estado}'.", usuario_id=ticket.usuario_id, ticket_id=ticket.id)
         db.session.add(notificacion)
         db.session.commit()
@@ -517,4 +687,6 @@ def cambiar_estado_ticket(ticket_id):
     return redirect(url_for('ticket_detalle', ticket_id=ticket.id))
 
 if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
     app.run(debug=True)

@@ -8,6 +8,14 @@
     <h2 class="mb-1"><i class="bi bi-speedometer2"></i> Información General</h2>
     <p class="text-muted mb-0">Vista general de tickets y métricas clave del sistema</p>
 
+    <!-- NUEVO: Alerta de Feriado -->
+    {% if es_feriado %}
+    <div class="alert alert-info mt-3 shadow-sm border-info" role="alert">
+        <h5 class="alert-heading"><i class="bi bi-calendar-event"></i> ¡Hoy es Feriado o Fin de Semana!</h5>
+        <p class="mb-0">El sistema ha detectado que hoy es un día no hábil según la API del Gobierno. Los SLAs de los tickets nuevos se ajustarán automáticamente.</p>
+    </div>
+    {% endif %}
+
     <div class="row my-4">
       <div class="col-xl-3 col-md-6 mb-3">
         <div class="card border-danger shadow-sm h-100">

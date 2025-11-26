@@ -4,42 +4,47 @@
 
 {% block content %}
 <div class="container-fluid fade-in">
-  <main class="px-md-4 py-4">
-    <h2 class="mt-4"><i class="bi bi-bar-chart"></i> Reportes y Estadísticas</h2>
-    <p class="text-muted">Análisis del rendimiento y la carga de trabajo del sistema.</p>
+  <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <h2 class="mt-4"><i class="bi bi-bar-chart"></i> Reportes y Estadísticas</h2>
+        <p class="text-muted">Análisis del rendimiento y la carga de trabajo del sistema.</p>
+      </div>
+      <div>
+          <a href="{{ url_for('exportar_reporte') }}" class="btn btn-success">
+              <i class="bi bi-file-earmark-excel-fill"></i> Descargar Reporte Excel
+          </a>
+      </div>
+  </div>
 
-    <div class="row">
-      <div class="col-md-6 mb-4">
-        <div class="card shadow-sm">
-          <div class="card-header bg-dark text-white"><i class="bi bi-person-check"></i> Tickets Resueltos por Técnico</div>
-          <div class="card-body"><canvas id="chartPorTecnico"></canvas></div>
-        </div>
+  <div class="row mt-3">
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white"><i class="bi bi-person-check"></i> Tickets Resueltos por Técnico</div>
+        <div class="card-body"><canvas id="chartPorTecnico"></canvas></div>
       </div>
-      <div class="col-md-6 mb-4">
-        <div class="card shadow-sm">
-          <div class="card-header bg-dark text-white"><i class="bi bi-tags"></i> Tickets por Categoría</div>
-          <div class="card-body"><canvas id="chartPorCategoria"></canvas></div>
-        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white"><i class="bi bi-tags"></i> Tickets por Categoría</div>
+        <div class="card-body"><canvas id="chartPorCategoria"></canvas></div>
       </div>
-      <div class="col-md-12 mb-4">
-        <div class="card shadow-sm">
-          <div class="card-header bg-dark text-white"><i class="bi bi-pie-chart"></i> Resumen de Tickets por Estado</div>
-          <div class="card-body" style="max-height: 400px; display: flex; justify-content: center;">
-            <canvas id="chartPorEstado"></canvas>
-          </div>
+    </div>
+    <div class="col-md-12 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white"><i class="bi bi-pie-chart"></i> Resumen de Tickets por Estado</div>
+        <div class="card-body" style="max-height: 400px; display: flex; justify-content: center;">
+          <canvas id="chartPorEstado"></canvas>
         </div>
       </div>
     </div>
-  </main>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // Usamos el filtro 'tojson' de Jinja2 para pasar los datos de Python a JS de forma segura
     const chartData = {{ chart_data|tojson }};
 
-    // Gráfico 1: Tickets resueltos por técnico
     new Chart(document.getElementById('chartPorTecnico'), {
         type: 'bar',
         data: {
@@ -52,7 +57,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Gráfico 2: Tickets por categoría
     new Chart(document.getElementById('chartPorCategoria'), {
         type: 'bar',
         data: {
@@ -65,7 +69,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Gráfico 3: Tickets por estado
     new Chart(document.getElementById('chartPorEstado'), {
         type: 'doughnut',
         data: {
@@ -73,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function () {
             datasets: [{
                 label: 'Tickets',
                 data: chartData.estados_data,
-                backgroundColor: ['#dc3545', '#ffc107', '#198754'] // Rojo para Abierto, Amarillo para En Proceso, Verde para Cerrado
+                backgroundColor: ['#dc3545', '#ffc107', '#198754']
             }]
         }
     });
